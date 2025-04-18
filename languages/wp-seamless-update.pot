@@ -1,0 +1,231 @@
+# Copyright (C) 2025 Your Name
+# This file is distributed under the same license as the WP Seamless Update package.
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: WP Seamless Update\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4.4\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: wp-seamless-update.php:35
+msgid "WP Seamless Update Settings"
+msgstr ""
+
+#: wp-seamless-update.php:36 wp-seamless-update.php:629
+msgid "Seamless Update"
+msgstr ""
+
+#: wp-seamless-update.php:49 wp-seamless-update.php:141
+msgid "Seamless Update Configuration"
+msgstr ""
+
+#: wp-seamless-update.php:55 wp-seamless-update.php:157
+msgid "Target Theme"
+msgstr ""
+
+#: wp-seamless-update.php:61 wp-seamless-update.php:176
+msgid "Update Source URL"
+msgstr ""
+
+#: wp-seamless-update.php:67 wp-seamless-update.php:190
+msgid "Number of Backups to Keep"
+msgstr ""
+
+#: wp-seamless-update.php:74 wp-seamless-update.php:200
+msgid "Status & Actions"
+msgstr ""
+
+#: wp-seamless-update.php:80 wp-seamless-update.php:206
+msgid "Current Status"
+msgstr ""
+
+#: wp-seamless-update.php:86 wp-seamless-update.php:236
+msgid "Manual Actions"
+msgstr ""
+
+#: wp-seamless-update.php:107
+msgid "Selected theme does not exist."
+msgstr ""
+
+#: wp-seamless-update.php:121
+msgid "Invalid Update Source URL."
+msgstr ""
+
+#: wp-seamless-update.php:142
+msgid "Select the theme you want to manage with seamless updates and provide the URL for the update server."
+msgstr ""
+
+#: wp-seamless-update.php:143
+msgid "The update server URL should point to an endpoint providing a JSON file (e.g., version.json) with `display_version`, `internal_version`, and a `files` manifest (path, hash, url)."
+msgstr ""
+
+#: wp-seamless-update.php:153
+msgid "-- Select a Theme --"
+msgstr ""
+
+#: wp-seamless-update.php:163
+msgid "Select the theme to apply seamless updates to."
+msgstr ""
+
+#: wp-seamless-update.php:182
+msgid "URL pointing to the JSON file containing update information."
+msgstr ""
+
+#: wp-seamless-update.php:196
+msgid "Number of backups to retain. Set to 0 to disable backups (not recommended)."
+msgstr ""
+
+#: wp-seamless-update.php:201
+msgid "View the current status of the managed theme and perform manual actions."
+msgstr ""
+
+#: wp-seamless-update.php:212
+msgid "No target theme selected."
+msgstr ""
+
+#: wp-seamless-update.php:218
+msgid "Selected target theme is not installed or accessible."
+msgstr ""
+
+#: wp-seamless-update.php:225 wp-seamless-update.php:340
+msgid "Never"
+msgstr ""
+
+#: wp-seamless-update.php:226 wp-seamless-update.php:341
+#: wp-seamless-update.php:358
+msgid "N/A"
+msgstr ""
+
+#: wp-seamless-update.php:229
+msgid "Theme Name:"
+msgstr ""
+
+#: wp-seamless-update.php:230
+msgid "Display Version:"
+msgstr ""
+
+#: wp-seamless-update.php:231
+msgid "Internal Version:"
+msgstr ""
+
+#: wp-seamless-update.php:232
+msgid "Last Update Check:"
+msgstr ""
+
+#: wp-seamless-update.php:233
+msgid "Last Check Status:"
+msgstr ""
+
+#: wp-seamless-update.php:241 wp-seamless-update.php:271
+msgid "Check for Updates Now"
+msgstr ""
+
+#: wp-seamless-update.php:244
+msgid "Manually trigger the update check process. Requires Target Theme and Update URL to be set."
+msgstr ""
+
+#: wp-seamless-update.php:263
+msgid "Save Settings"
+msgstr ""
+
+#: wp-seamless-update.php:275
+msgid "Checking..."
+msgstr ""
+
+#: wp-seamless-update.php:287
+msgid "Error:"
+msgstr ""
+
+#: wp-seamless-update.php:290
+msgid "AJAX Error:"
+msgstr ""
+
+#: wp-seamless-update.php:310
+msgid "Permission denied."
+msgstr ""
+
+#: wp-seamless-update.php:318
+msgid "Plugin not configured (Target Theme or Update URL missing)."
+msgstr ""
+
+#: wp-seamless-update.php:330
+msgid "Update check triggered. Status will refresh on the next automatic check or page load."
+msgstr ""
+
+#: wp-seamless-update.php:366
+msgid "Plugin not configured."
+msgstr ""
+
+#: wp-seamless-update.php:372
+msgid "Target theme not found or not checked by WordPress."
+msgstr ""
+
+#: wp-seamless-update.php:378
+msgid "Target theme does not exist."
+msgstr ""
+
+#: wp-seamless-update.php:388
+msgid "Failed to fetch or parse remote update info."
+msgstr ""
+
+#: wp-seamless-update.php:394
+#, php-format
+msgid "Standard update available (Display Version %s > %s). Letting WP handle."
+msgstr ""
+
+#: wp-seamless-update.php:404
+#, php-format
+msgid "Internal update needed (Internal Version %s > %s). Scheduling update."
+msgstr ""
+
+#: wp-seamless-update.php:418
+#, php-format
+msgid "Internal: %s"
+msgstr ""
+
+#: wp-seamless-update.php:436
+#, php-format
+msgid "Theme is up to date (Display: %s, Internal: %s)."
+msgstr ""
+
+#: wp-seamless-update.php:442
+#, php-format
+msgid "Remote display version (%s) is older than local (%s). No action taken."
+msgstr ""
+
+#: wp-seamless-update.php:900
+#, php-format
+msgid "Update successful to Internal Version %s."
+msgstr ""
+
+#: wp-seamless-update.php:920
+msgid "Update failed. Rollback failed (Filesystem unavailable)."
+msgstr ""
+
+#: wp-seamless-update.php:931
+msgid "Update failed. CRITICAL: Rollback failed (No backup available, theme directory missing). Manual intervention required."
+msgstr ""
+
+#: wp-seamless-update.php:934
+msgid "Update failed. Rollback skipped (No backup available, original theme directory untouched)."
+msgstr ""
+
+#: wp-seamless-update.php:947
+msgid "Update failed. Rollback failed (Could not delete existing theme directory). Manual intervention required."
+msgstr ""
+
+#: wp-seamless-update.php:960
+msgid "Update failed. CRITICAL: Rollback failed during restore from backup. Manual intervention required."
+msgstr ""
+
+#: wp-seamless-update.php:965
+msgid "Update failed. Successfully rolled back to previous version."
+msgstr ""
