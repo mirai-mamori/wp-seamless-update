@@ -49,8 +49,8 @@ function wpsu_cleanup_temp_dirs($wp_filesystem, $uploads_base, $target_theme_slu
         return;
     }
 
-    $temp_base = $uploads_base . WPSU_TEMP_UPDATE_DIR_BASE . '/';
-    $staging_base = $uploads_base; // 临时目录直接位于上传基础目录中，带前缀
+    $temp_base = trailingslashit($uploads_base) . trailingslashit(WPSU_TEMP_UPDATE_DIR_BASE);
+    $staging_base = trailingslashit($uploads_base); // 临时目录直接位于上传基础目录中，带前缀
 
     $patterns = array(
         $temp_base . $target_theme_slug . '-*',
@@ -79,12 +79,11 @@ function wpsu_cleanup_temp_dirs($wp_filesystem, $uploads_base, $target_theme_slu
                         // 如果目录名不包含有效时间戳，也视为旧目录进行清理，防止累积无效目录
                         error_log("WP Seamless Update Cleanup: 发现无效或无时间戳的目录，标记为旧目录: $dir_to_delete");
                         $is_old = true;
-                    }
-
-
-                    if ($is_old) {
+                    }                    if ($is_old) {
                         error_log("WP Seamless Update Cleanup: 删除旧的临时/暂存目录: $dir_to_delete");
-                        $wp_filesystem->delete($dir_to_delete, true);
+                        if (!$wp_filesystem->delete($dir_to_delete, true)) {
+                            error_log("WP Seamless Update Cleanup: 无法删除旧的临时/暂存目录: $dir_to_delete");
+                        }
                     }
                 }
             }
@@ -102,7 +101,15 @@ function wpsu_cleanup_temp_dirs($wp_filesystem, $uploads_base, $target_theme_slu
  */
 function wpsu_manage_backups( $theme_slug, $backup_dir_base, $backups_to_keep ) {
     global $wp_filesystem;
-    if ( ! $wp_filesystem || $backups_to_keep <= 0 || ! $wp_filesystem->is_dir( $backup_dir_base ) ) {
+    if ( ! $wp_filesystem || $backups_to_keep <= 0 ) {
+        return;
+    }
+    
+    // 确保备份目录路径末尾有斜杠
+    $backup_dir_base = trailingslashit($backup_dir_base);
+    
+    // 检查目录是否存在
+    if ( ! $wp_filesystem->is_dir( $backup_dir_base ) ) {
         return;
     }
 

@@ -90,7 +90,7 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
     $timestamp = time();
 
     // 临时下载目录 (现在用于存放下载的包和解压后的文件)
-    $temp_dir_base = $uploads_base . WPSU_TEMP_UPDATE_DIR_BASE . '/';
+    $temp_dir_base = trailingslashit($uploads_base) . trailingslashit(WPSU_TEMP_UPDATE_DIR_BASE);
     $temp_dir = $temp_dir_base . $target_theme_slug . '-' . $timestamp . '/'; // 主临时目录
     $temp_package_file = $temp_dir . $target_theme_slug . '-update.zip'; // 下载的包文件路径
     $temp_extract_dir = $temp_dir . 'extracted/'; // 解压目录
@@ -99,12 +99,12 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
     error_log("WP Seamless Update Cron: 临时解压目录: $temp_extract_dir");
 
     // 备份目录
-    $backup_dir_base = $uploads_base . WPSU_BACKUP_DIR_BASE . '/';
+    $backup_dir_base = trailingslashit($uploads_base) . trailingslashit(WPSU_BACKUP_DIR_BASE);
     $backup_dir = $backup_dir_base . $target_theme_slug . '-' . $timestamp . '/';
     error_log("WP Seamless Update Cron: 备份目录: $backup_dir");
 
     // 暂存目录（更新应用于此处，然后切换）
-    $staging_dir = $uploads_base . 'wpsu-staging-' . $target_theme_slug . '-' . $timestamp . '/';
+    $staging_dir = trailingslashit($uploads_base) . 'wpsu-staging-' . $target_theme_slug . '-' . $timestamp . '/';
     error_log("WP Seamless Update Cron: 暂存目录: $staging_dir");
 
     // 清理之前失败尝试中可能遗留的临时目录（可选但是良好做法）
@@ -508,16 +508,16 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
     // 管理备份（删除旧的）
     if ($backup_dir) { // 仅当备份已启用/创建时管理
         wpsu_manage_backups( $target_theme_slug, $backup_dir_base, $backups_to_keep );
-    }
-
-    // 清理临时下载和解压目录
+    }    // 清理临时下载和解压目录
     error_log("WP Seamless Update Cron: 清理临时工作目录 $temp_dir。");
-    $wp_filesystem->delete( $temp_dir, true ); // 这会删除包和解压目录
-
-    // 清理可能残留的暂存目录（如果切换成功，它已经被移动了，但以防万一）
+    if (!$wp_filesystem->delete( $temp_dir, true )) { // 这会删除包和解压目录
+        error_log("WP Seamless Update Cron: 无法删除临时工作目录 $temp_dir。");
+    }// 清理可能残留的暂存目录（如果切换成功，它已经被移动了，但以防万一）
     if ($wp_filesystem->exists($staging_dir)) {
         error_log("WP Seamless Update Cron: 清理残留的暂存目录 $staging_dir。");
-        $wp_filesystem->delete( $staging_dir, true );
+        if (!$wp_filesystem->delete( $staging_dir, true )) {
+            error_log("WP Seamless Update Cron: 无法删除暂存目录 $staging_dir。");
+        }
     }
 
     update_option( 'wpsu_last_check_status_' . $target_theme_slug, sprintf( __( 'Update successful. Remote Internal Version: %s (Local INT_VERSION should reflect this after update).', 'wp-seamless-update' ), $remote_info->internal_version ) );
@@ -591,16 +591,18 @@ function wpsu_rollback_update( $theme_slug, $backup_dir, $theme_root, $staging_d
          wpsu_clear_update_transient($theme_slug); // 即使回滚在此处失败，也清除通知
          update_option( 'wpsu_last_check_status_' . $theme_slug, __( 'Update failed. Rollback failed (Filesystem unavailable).', 'wp-seamless-update' ) );
          return;
-    }
-
-    // 首先清理暂存目录和临时工作目录
+    }    // 首先清理暂存目录和临时工作目录
     if ( $wp_filesystem->exists( $staging_dir ) ) {
         error_log("WP Seamless Update Rollback: 删除暂存目录 $staging_dir。");
-        $wp_filesystem->delete( $staging_dir, true );
+        if ( !$wp_filesystem->delete( $staging_dir, true ) ) {
+            error_log("WP Seamless Update Rollback: 无法删除暂存目录 $staging_dir。");
+        }
     }
     if ( $wp_filesystem->exists( $temp_dir ) ) {
         error_log("WP Seamless Update Rollback: 删除临时工作目录 $temp_dir。");
-        $wp_filesystem->delete( $temp_dir, true );
+        if ( !$wp_filesystem->delete( $temp_dir, true ) ) {
+            error_log("WP Seamless Update Rollback: 无法删除临时工作目录 $temp_dir。");
+        }
     }
 
     // 检查备份是否存在（且已启用）
@@ -726,7 +728,7 @@ function wpsu_get_update_progress($target_theme_slug) {
     // 减少超时检测时间到2分钟，更快地发现问题
     if ($progress['time'] > 0 && (time() - $progress['time'] > 120)) {
         // 检测到更新过程已经超过2分钟没有更新进度
-        if ($progress['percent'] >= 0 && $progress['percent'] < 100 && !$progress['is_error']) { // 仅在未完成且非错误状态下标记为超时
+        if ($progress['percent'] > 0 && $progress['percent'] < 100 && !$progress['is_error']) { // 仅在未完成且非错误状态下标记为超时
             $last_step = $progress['message'];
             error_log("WP Seamless Update: 检测到更新过程可能超时或卡住，最后进度: {$progress['percent']}%, 最后消息: $last_step");
             

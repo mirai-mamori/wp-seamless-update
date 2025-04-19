@@ -31,10 +31,9 @@ require_once plugin_dir_path( __FILE__ ) . 'includes/ajax.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/admin.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/hooks.php';
 
-// 注册激活、停用和卸载钩子
+// 注册激活、停用钩子
 register_activation_hook( __FILE__, 'wpsu_activate' );
 register_deactivation_hook( __FILE__, 'wpsu_deactivate' );
-register_uninstall_hook( __FILE__, 'wpsu_uninstall' );
 
 // 挂接更新检查钩子
 add_filter( 'pre_set_site_transient_update_themes', 'wpsu_check_for_theme_update', 20 );
