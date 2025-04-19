@@ -1,13 +1,22 @@
 <?php
 /**
- * 插件的辅助函数
- *
- * @package WP_Seamless_Update
+ * Helper functions for WP Seamless Update
  */
 
-// If this file is called directly, abort.
-if ( ! defined( 'WPINC' ) ) {
-    die;
+// 确保使用正确的翻译函数
+function wpsu_get_text($text) {
+    return __($text, 'wp-seamless-update');
+}
+
+// 确保使用正确的翻译函数（带回显）
+function wpsu_echo_text($text) {
+    _e($text, 'wp-seamless-update');
+}
+
+// 确保所有错误消息和通知也使用文本域
+function wpsu_admin_notice($message, $type = 'info') {
+    $class = 'notice notice-' . $type;
+    printf('<div class="%1$s"><p>%2$s</p></div>', esc_attr($class), esc_html__($message, 'wp-seamless-update'));
 }
 
 /**

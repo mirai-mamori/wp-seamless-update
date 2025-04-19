@@ -6,8 +6,8 @@
  * Version:           1.0.0
  * Author:            Hitomi
  * Author URI:        https://kiseki.blog/
- * License:           GPL-2.0+
- * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
+ * License:           GPL-3.0
+ * License URI:       http://www.gnu.org/licenses/gpl-3.0.txt
  * Text Domain:       wp-seamless-update
  * Domain Path:       /languages
  */
@@ -16,6 +16,24 @@
 if ( ! defined( 'WPINC' ) ) {
 	die;
 }
+
+// 修正加载文本域函数
+function wpsu_load_textdomain() {
+    // 获取插件基础名称
+    $plugin_rel_path = basename( dirname( __FILE__ ) ) . '/languages';
+    
+    // 使用WordPress标准方法加载文本域
+    load_plugin_textdomain( 
+        'wp-seamless-update', 
+        false, 
+        $plugin_rel_path 
+    );
+    
+}
+
+// 使用正确的钩子加载文本域 - 同时使用init钩子确保完全加载
+add_action( 'plugins_loaded', 'wpsu_load_textdomain', 5 );
+add_action( 'init', 'wpsu_load_textdomain', 5 );
 
 // 加载常量定义
 require_once plugin_dir_path( __FILE__ ) . 'includes/constants.php';

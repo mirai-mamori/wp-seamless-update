@@ -5,836 +5,888 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Seamless Update 1.0.0\n"
 "Report-Msgid-Bugs-To: https://docs.fuukei.org/\n"
-"POT-Creation-Date: 2025-04-19 18:02+0900\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"POT-Creation-Date: 2025-04-19 17:58+0900\n"
+"PO-Revision-Date: 2025-04-19 17:58+0900\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.4.4\n"
 "X-Domain: wp-seamless-update\n"
 "X-Poedit-Basepath: ..\n"
-"X-Poedit-KeywordsList: __;_e;_x:1,2c;_ex:1,2c;_n:1,2;_nx:1,2,4c;_n_noop:1,2;_nx_noop:1,2,3c;esc_attr__;esc_html__;esc_attr_e;esc_html_e;esc_attr_x:1,2c;esc_html_x:1,2c\n"
+"X-Poedit-KeywordsList: __;_e;_x:1,2c;_ex:1,2c;_n:1,2;_nx:1,2,4c;_n_noop:1,2;"
+"_nx_noop:1,2,3c;esc_attr__;esc_html__;esc_attr_e;esc_html_e;esc_attr_x:1,2c;"
+"esc_html_x:1,2c\n"
 "X-Poedit-SearchPath-0: .\n"
 "X-Poedit-SearchPathExcluded-0: node_modules\n"
 "X-Poedit-SearchPathExcluded-1: vendor\n"
 
 #: includes/admin.php:18
 msgid "WP Seamless Update Settings"
-msgstr ""
+msgstr "WP 无缝更新设置"
 
 #: includes/admin.php:19
 msgid "Seamless Update"
-msgstr ""
+msgstr "无缝更新"
 
 #: includes/admin.php:35
 msgid "Seamless Update Configuration"
-msgstr ""
+msgstr "无缝更新配置"
 
 #: includes/admin.php:42
 msgid "Target Theme"
-msgstr ""
+msgstr "目标主题"
 
 #: includes/admin.php:50
 msgid "Update Source URL"
-msgstr ""
+msgstr "更新源 URL"
 
 #: includes/admin.php:58
 msgid "Number of Backups to Keep"
-msgstr ""
+msgstr "保留备份数量"
 
 #: includes/admin.php:67
 msgid "Status & Actions"
-msgstr ""
+msgstr "状态与操作"
 
 #: includes/admin.php:74
 msgid "Current Status"
-msgstr ""
+msgstr "当前状态"
 
 #: includes/admin.php:82
 msgid "Manual Actions"
-msgstr ""
+msgstr "手动操作"
 
 #: includes/admin.php:91
 msgid "Filesystem Test"
-msgstr ""
+msgstr "文件系统测试"
 
 #: includes/admin.php:120
 msgid "Selected theme does not exist."
-msgstr ""
+msgstr "所选主题不存在。"
 
 #: includes/admin.php:137
 msgid "Invalid Update Source URL."
-msgstr ""
+msgstr "无效的更新源 URL。"
 
 #: includes/admin.php:158
-msgid "Select the theme you want to manage with seamless updates and provide the URL for the update server."
-msgstr ""
+msgid ""
+"Select the theme you want to manage with seamless updates and provide the "
+"URL for the update server."
+msgstr "选择您想要使用无缝更新管理的主题，并提供更新服务器的 URL。"
 
 #: includes/admin.php:159
-msgid "The update server URL should point to an endpoint providing a JSON file (e.g., version.json) with `display_version`, `internal_version`, and a `files` manifest (path, hash, url)."
+msgid ""
+"The update server URL should point to an endpoint providing a JSON file (e."
+"g., version.json) with `display_version`, `internal_version`, and a `files` "
+"manifest (path, hash, url)."
 msgstr ""
+"更新服务器 URL 应指向提供 JSON 文件（例如 version.json）的端点，该文件包含 "
+"`display_version`、`internal_version` 和 `files` 清单（路径、哈希值、URL）。"
 
 #: includes/admin.php:171
 msgid "-- Select a Theme --"
-msgstr ""
+msgstr "-- 选择一个主题 --"
 
 #: includes/admin.php:178
 msgid "Select the theme to apply seamless updates to."
-msgstr ""
+msgstr "选择要应用无缝更新的主题。"
 
 #: includes/admin.php:252
 msgid "URL pointing to the JSON file containing update information."
-msgstr ""
+msgstr "指向包含更新信息的 JSON 文件的 URL。"
 
 #: includes/admin.php:264
-msgid "Number of backups to retain. Set to 0 to disable backups (not recommended)."
-msgstr ""
+msgid ""
+"Number of backups to retain. Set to 0 to disable backups (not recommended)."
+msgstr "要保留的备份数量。设置为 0 将禁用备份（不推荐）。"
 
 #: includes/admin.php:272
-msgid "View the current status of the managed theme and perform manual actions."
-msgstr ""
+msgid ""
+"View the current status of the managed theme and perform manual actions."
+msgstr "查看受管理主题的当前状态并执行手动操作。"
 
 #: includes/admin.php:283
 msgid "No target theme selected."
-msgstr ""
+msgstr "未选择目标主题。"
 
 #: includes/admin.php:289
 msgid "Selected target theme is not installed or accessible."
-msgstr ""
+msgstr "所选目标主题未安装或无法访问。"
 
 #: includes/admin.php:294 includes/admin.php:309 includes/admin.php:1155
 #: includes/admin.php:1337 includes/admin.php:1376 includes/ajax.php:38
 msgid "N/A"
-msgstr ""
+msgstr "不适用"
 
 #: includes/admin.php:302
 msgid "Constant INT_VERSION not found in active theme functions.php"
-msgstr ""
+msgstr "在活动主题的 functions.php 中未找到常量 INT_VERSION"
 
 #: includes/admin.php:305
 msgid "Theme not active, cannot read INT_VERSION"
-msgstr ""
+msgstr "主题未激活，无法读取 INT_VERSION"
 
 #: includes/admin.php:308
 msgid "Never"
-msgstr ""
+msgstr "从未"
 
 #: includes/admin.php:332
 msgid "Theme Name"
-msgstr ""
+msgstr "主题名称"
 
 #: includes/admin.php:337
 msgid "Display Version"
-msgstr ""
+msgstr "显示版本"
 
 #: includes/admin.php:342
 msgid "Internal Version"
-msgstr ""
+msgstr "内部版本"
 
 #: includes/admin.php:349
 msgid "Last Check"
-msgstr ""
+msgstr "上次检查"
 
 #: includes/admin.php:356
 msgid "Status"
-msgstr ""
+msgstr "状态"
 
 #: includes/admin.php:362
 msgid "Update issues detected. Possible solutions:"
-msgstr ""
+msgstr "检测到更新问题。可能的解决方案："
 
 #: includes/admin.php:364
-msgid "Check theme file permissions (should be 644 for files, 755 for directories)"
-msgstr ""
+msgid ""
+"Check theme file permissions (should be 644 for files, 755 for directories)"
+msgstr "检查主题文件权限（文件应为 644，目录应为 755）"
 
 #: includes/admin.php:365
-msgid "Ensure the INT_VERSION constant is properly defined in your theme's functions.php"
-msgstr ""
+msgid ""
+"Ensure the INT_VERSION constant is properly defined in your theme's "
+"functions.php"
+msgstr "确保在主题的 functions.php 中正确定义了 INT_VERSION 常量"
 
 #: includes/admin.php:366
 msgid "Verify the update server is accessible and returns valid data"
-msgstr ""
+msgstr "验证更新服务器可访问并返回有效数据"
 
 #: includes/admin.php:367
 msgid "Review PHP error logs for detailed error messages"
-msgstr ""
+msgstr "查看 PHP 错误日志获取详细错误信息"
 
 #: includes/admin.php:370
 msgid "Reset Error Status"
-msgstr ""
+msgstr "重置错误状态"
 
 #: includes/admin.php:378
 #, php-format
 msgid "Update scheduled for: %s"
-msgstr ""
+msgstr "更新计划于：%s"
 
 #: includes/admin.php:380
 msgid "Cancel Scheduled Update"
-msgstr ""
+msgstr "取消计划更新"
 
 #: includes/admin.php:420
 msgid "Check for Updates"
-msgstr ""
+msgstr "检查更新"
 
 #: includes/admin.php:421
 msgid "Manually trigger the update check process."
-msgstr ""
+msgstr "手动触发更新检查流程。"
 
 #: includes/admin.php:424
 msgid "Check Now"
-msgstr ""
+msgstr "立即检查"
 
 #: includes/admin.php:437
 msgid "Execute Update"
-msgstr ""
+msgstr "执行更新"
 
 #: includes/admin.php:438
 msgid "Execute a scheduled or immediate update for your theme."
-msgstr ""
+msgstr "执行主题的计划更新或立即更新。"
 
 #: includes/admin.php:441
 msgid "Execute Update Now"
-msgstr ""
+msgstr "立即执行更新"
 
 #: includes/admin.php:449
 #, php-format
 msgid "Update scheduled at: %s"
-msgstr ""
+msgstr "更新计划于：%s"
 
 #: includes/admin.php:468
 msgid "Filesystem Access Test"
-msgstr ""
+msgstr "文件系统访问测试"
 
 #: includes/admin.php:469
-msgid "Check if WP_Filesystem can be initialized correctly for background operations."
-msgstr ""
+msgid ""
+"Check if WP_Filesystem can be initialized correctly for background "
+"operations."
+msgstr "检查是否可以为后台操作正确初始化 WP_Filesystem。"
 
 #: includes/admin.php:472
 msgid "Run Test"
-msgstr ""
+msgstr "运行测试"
 
 #: includes/admin.php:515
 msgid "Theme Update Configuration"
-msgstr ""
+msgstr "主题更新配置"
 
 #: includes/admin.php:539
 msgid "Save Settings"
-msgstr ""
+msgstr "保存设置"
 
 #: includes/admin.php:547
 msgid "Theme Status & Actions"
-msgstr ""
+msgstr "主题状态与操作"
 
 #: includes/admin.php:567
 msgid "Diagnostics & Tools"
-msgstr ""
+msgstr "诊断与工具"
 
 #: includes/admin.php:571
 msgid "Use these tools to diagnose and troubleshoot the update process."
-msgstr ""
+msgstr "使用这些工具诊断和排除更新过程中的问题。"
 
 #: includes/admin.php:586
 msgid "Help & Information"
-msgstr ""
+msgstr "帮助与信息"
 
 #: includes/admin.php:589
 msgid "How It Works"
-msgstr ""
+msgstr "工作原理"
 
 #: includes/admin.php:590
-msgid "WP Seamless Update enables partial theme updates based on internal version numbers without requiring a full theme update."
-msgstr ""
+msgid ""
+"WP Seamless Update enables partial theme updates based on internal version "
+"numbers without requiring a full theme update."
+msgstr "WP 无缝更新基于内部版本号实现部分主题更新，无需完全更新主题。"
 
 #: includes/admin.php:592
 msgid "Requirements"
-msgstr ""
+msgstr "要求"
 
 #: includes/admin.php:594
 msgid "Active theme with INT_VERSION constant"
-msgstr ""
+msgstr "带有 INT_VERSION 常量的活动主题"
 
 #: includes/admin.php:595
 msgid "Valid update server URL"
-msgstr ""
+msgstr "有效的更新服务器 URL"
 
 #: includes/admin.php:596
 msgid "Proper file permissions"
-msgstr ""
+msgstr "正确的文件权限"
 
 #: includes/admin.php:601
 msgid "Selected Theme"
-msgstr ""
+msgstr "已选主题"
 
 #: includes/admin.php:613
 #, php-format
 msgid "By %s"
-msgstr ""
+msgstr "作者：%s"
 
 #: includes/admin.php:624
 msgid "Update Process"
-msgstr ""
+msgstr "更新流程"
 
 #: includes/admin.php:631
 msgid "Check"
-msgstr ""
+msgstr "检查"
 
 #: includes/admin.php:632
-msgid "System checks for available updates by comparing your theme's INT_VERSION with the remote version."
-msgstr ""
+msgid ""
+"System checks for available updates by comparing your theme's INT_VERSION "
+"with the remote version."
+msgstr "系统通过比较主题的 INT_VERSION 与远程版本来检查可用更新。"
 
 #: includes/admin.php:639
 msgid "Download"
-msgstr ""
+msgstr "下载"
 
 #: includes/admin.php:640
 msgid "Modified files are downloaded and verified with their hash values."
-msgstr ""
+msgstr "下载修改过的文件并通过哈希值进行验证。"
 
 #: includes/admin.php:647
 msgid "Backup"
-msgstr ""
+msgstr "备份"
 
 #: includes/admin.php:648
 msgid "Original theme files are backed up before any changes are made."
-msgstr ""
+msgstr "在进行任何更改前会备份原始主题文件。"
 
 #: includes/admin.php:655
 msgid "Update"
-msgstr ""
+msgstr "更新"
 
 #: includes/admin.php:656
 msgid "Modified files are applied to your theme with minimal interruption."
-msgstr ""
+msgstr "修改过的文件将以最小干扰的方式应用到您的主题。"
 
 #: includes/admin.php:1143 includes/update-processor.php:114
 msgid "Checking for updates..."
-msgstr ""
+msgstr "正在检查更新..."
 
 #: includes/admin.php:1163 includes/admin.php:1253 includes/admin.php:1344
 #: includes/admin.php:1382
 msgid "Error:"
-msgstr ""
+msgstr "错误："
 
 #: includes/admin.php:1167 includes/admin.php:1271 includes/admin.php:1309
 #: includes/admin.php:1348 includes/admin.php:1386
 msgid "AJAX Error:"
-msgstr ""
+msgstr "AJAX 错误："
 
 #: includes/admin.php:1191
 msgid "Executing update..."
-msgstr ""
+msgstr "正在执行更新..."
 
 #: includes/admin.php:1264
 msgid "Update process is not responding. Check server error logs."
-msgstr ""
+msgstr "更新进程无响应。请检查服务器错误日志。"
 
 #: includes/admin.php:1292
 msgid "Testing filesystem access..."
-msgstr ""
+msgstr "正在测试文件系统访问..."
 
 #: includes/admin.php:1303
 msgid "Success:"
-msgstr ""
+msgstr "成功："
 
 #: includes/admin.php:1305
 msgid "Failed:"
-msgstr ""
+msgstr "失败："
 
 #: includes/admin.php:1362
 msgid "Are you sure you want to cancel the scheduled update?"
-msgstr ""
+msgstr "您确定要取消计划更新吗？"
 
 #: includes/ajax.php:21 includes/ajax.php:55 includes/ajax.php:107
 #: includes/ajax.php:254 includes/ajax.php:284 includes/ajax.php:337
 #: includes/ajax.php:391
 msgid "Permission denied."
-msgstr ""
+msgstr "权限被拒绝。"
 
 #: includes/ajax.php:29
 msgid "Plugin not configured (Target Theme or Update URL missing)."
-msgstr ""
+msgstr "插件未配置（缺少目标主题或更新 URL）。"
 
 #: includes/ajax.php:37
-msgid "Update check triggered. Status will refresh on the next automatic check or page load."
-msgstr ""
+msgid ""
+"Update check triggered. Status will refresh on the next automatic check or "
+"page load."
+msgstr "更新检查已触发。状态将在下次自动检查或页面加载时刷新。"
 
 #: includes/ajax.php:60
 msgid "Could not initialize WP_Filesystem."
-msgstr ""
+msgstr "无法初始化 WP_Filesystem。"
 
 #: includes/ajax.php:73
-msgid "Failed to retrieve filesystem credentials non-interactively. This might require direct filesystem access or specific constants (FS_METHOD, FTP_HOST, etc.) defined in wp-config.php for background tasks."
+msgid ""
+"Failed to retrieve filesystem credentials non-interactively. This might "
+"require direct filesystem access or specific constants (FS_METHOD, FTP_HOST, "
+"etc.) defined in wp-config.php for background tasks."
 msgstr ""
+"无法非交互式获取文件系统凭据。这可能需要在 wp-config.php 中定义直接文件系统访"
+"问或特定常量（FS_METHOD、FTP_HOST 等）以用于后台任务。"
 
 #: includes/ajax.php:80
-msgid "WP_Filesystem() failed to initialize with the retrieved credentials. Check filesystem permissions and ownership."
-msgstr ""
+msgid ""
+"WP_Filesystem() failed to initialize with the retrieved credentials. Check "
+"filesystem permissions and ownership."
+msgstr "使用获取的凭据初始化 WP_Filesystem() 失败。检查文件系统权限和所有权。"
 
 #: includes/ajax.php:83
 #, php-format
 msgid "Attempted method: %s"
-msgstr ""
+msgstr "尝试的方法：%s"
 
 #: includes/ajax.php:93
 #, php-format
 msgid "Successfully initialized using the '%s' method."
-msgstr ""
+msgstr "使用\"%s\"方法成功初始化。"
 
 #: includes/ajax.php:114
 msgid "Target theme not configured."
-msgstr ""
+msgstr "目标主题未配置。"
 
 #: includes/ajax.php:119
 msgid "Execution started, status unknown."
-msgstr ""
+msgstr "执行已开始，状态未知。"
 
 #: includes/ajax.php:131
 msgid "Update URL not configured."
-msgstr ""
+msgstr "更新 URL 未配置。"
 
 #: includes/ajax.php:138
 msgid "Failed to fetch update information from remote server."
-msgstr ""
+msgstr "无法从远程服务器获取更新信息。"
 
 #: includes/ajax.php:145
 msgid "Target theme is not active. Please activate it first."
-msgstr ""
+msgstr "目标主题未激活。请先激活它。"
 
 #: includes/ajax.php:150
 msgid "INT_VERSION constant not defined in active theme."
-msgstr ""
+msgstr "活动主题中未定义 INT_VERSION 常量。"
 
 #: includes/ajax.php:159
 #, php-format
-msgid "No update needed. Current version (%s) is up to date or newer than remote version (%s)."
-msgstr ""
+msgid ""
+"No update needed. Current version (%s) is up to date or newer than remote "
+"version (%s)."
+msgstr "无需更新。当前版本（%s）已是最新或比远程版本（%s）更新。"
 
 #: includes/ajax.php:177
 msgid "Update execution in progress..."
-msgstr ""
+msgstr "更新执行进行中..."
 
 #: includes/ajax.php:198
 msgid "Execution finished, status unknown."
-msgstr ""
+msgstr "执行完成，状态未知。"
 
 #: includes/ajax.php:202 includes/update-processor.php:537
 #, php-format
 msgid "Update failed with error: %s"
-msgstr ""
+msgstr "更新失败，错误：%s"
 
 #: includes/ajax.php:207 includes/update-processor.php:559
 #, php-format
 msgid "Update failed with fatal error: %s"
-msgstr ""
+msgstr "更新失败，致命错误：%s"
 
 #: includes/ajax.php:218
 msgid "(Stray output captured, check PHP error log)"
-msgstr ""
+msgstr "（捕获到意外输出，请检查 PHP 错误日志）"
 
 #: includes/ajax.php:228
 msgid "Update execution completed."
-msgstr ""
+msgstr "更新执行完成。"
 
 #: includes/ajax.php:228 includes/ajax.php:234 includes/ajax.php:241
 msgid "Final Status:"
-msgstr ""
+msgstr "最终状态："
 
 #: includes/ajax.php:234
-msgid "Update execution finished, but final status is unclear or indicates an issue."
-msgstr ""
+msgid ""
+"Update execution finished, but final status is unclear or indicates an issue."
+msgstr "更新执行完成，但最终状态不明确或表明有问题。"
 
 #: includes/ajax.php:241
 msgid "Update execution failed."
-msgstr ""
+msgstr "更新执行失败。"
 
 #: includes/ajax.php:264 includes/ajax.php:294 includes/ajax.php:345
 msgid "No target theme configured."
-msgstr ""
+msgstr "未配置目标主题。"
 
 #: includes/ajax.php:269 includes/ajax.php:273
 msgid "Status reset by admin."
-msgstr ""
+msgstr "状态已被管理员重置。"
 
 #: includes/ajax.php:272
 msgid "Error status has been reset."
-msgstr ""
+msgstr "错误状态已重置。"
 
 #: includes/ajax.php:302
 msgid "No scheduled update found."
-msgstr ""
+msgstr "未找到计划更新。"
 
 #: includes/ajax.php:310
 msgid "Failed to cancel scheduled update."
-msgstr ""
+msgstr "取消计划更新失败。"
 
 #: includes/ajax.php:318 includes/ajax.php:322
 msgid "Scheduled update cancelled by admin."
-msgstr ""
+msgstr "计划更新已被管理员取消。"
 
 #: includes/ajax.php:321
 msgid "Scheduled update has been cancelled."
-msgstr ""
+msgstr "计划更新已取消。"
 
 #: includes/ajax.php:357
 msgid "Progress tracking function not available"
-msgstr ""
+msgstr "进度跟踪功能不可用"
 
 #: includes/ajax.php:375
 #, php-format
 msgid "Error getting update progress: %s"
-msgstr ""
+msgstr "获取更新进度出错：%s"
 
 #: includes/ajax.php:401
 msgid "No theme slug provided."
-msgstr ""
+msgstr "未提供主题别名。"
 
 #: includes/ajax.php:408
 msgid "Theme does not exist."
-msgstr ""
+msgstr "主题不存在。"
 
 #: includes/ajax.php:457
 msgid "SSU_URL constant found in theme."
-msgstr ""
+msgstr "在主题中找到 SSU_URL 常量。"
 
 #: includes/ajax.php:461
 msgid "SSU_URL constant not found in theme."
-msgstr ""
+msgstr "在主题中未找到 SSU_URL 常量。"
 
 #: includes/class-wpsu-base.php:70
 msgid "每2小时一次"
-msgstr ""
+msgstr "每2小时一次"
 
 #: includes/hooks.php:50
 msgid "设置"
-msgstr ""
+msgstr "设置"
 
 #: includes/update-checker.php:35
 msgid "Plugin not configured."
-msgstr ""
+msgstr "插件未配置。"
 
 #: includes/update-checker.php:41
 msgid "Target theme not found or not checked by WordPress."
-msgstr ""
+msgstr "目标主题未找到或未被 WordPress 检查。"
 
 #: includes/update-checker.php:47
 msgid "Target theme does not exist."
-msgstr ""
+msgstr "目标主题不存在。"
 
 #: includes/update-checker.php:68
 msgid "Could not read INT_VERSION from active theme functions.php."
-msgstr ""
+msgstr "无法从活动主题的 functions.php 读取 INT_VERSION。"
 
 #: includes/update-checker.php:71
 msgid "Target theme not active, cannot read INT_VERSION."
-msgstr ""
+msgstr "目标主题未激活，无法读取 INT_VERSION。"
 
 #: includes/update-checker.php:83
 msgid "Failed to fetch or parse remote update info."
-msgstr ""
+msgstr "获取或解析远程更新信息失败。"
 
 #: includes/update-checker.php:90
 #, php-format
 msgid "Standard update available (Display Version %s > %s). Letting WP handle."
-msgstr ""
+msgstr "标准更新可用（显示版本 %s > %s）。由 WP 处理。"
 
 #: includes/update-checker.php:99
 #, php-format
-msgid "Internal update needed (Remote Internal: %s > Local INT_VERSION: %s). Scheduling update."
+msgid ""
+"Internal update needed (Remote Internal: %s > Local INT_VERSION: %s). "
+"Scheduling update."
 msgstr ""
+"需要内部更新（远程内部版本：%s > 本地 INT_VERSION：%s）。正在安排更新。"
 
 #: includes/update-checker.php:124
 #, php-format
 msgid "Internal Update Available: %s"
-msgstr ""
+msgstr "内部更新可用：%s"
 
 #: includes/update-checker.php:142
 #, php-format
 msgid "Theme is up to date (Display: %s, INT_VERSION: %s)."
-msgstr ""
+msgstr "主题已是最新（显示：%s，INT_VERSION：%s）。"
 
 #: includes/update-checker.php:148
 #, php-format
 msgid "Remote display version (%s) is older than local (%s). No action taken."
-msgstr ""
+msgstr "远程显示版本（%s）早于本地版本（%s）。未采取操作。"
 
 #: includes/update-processor.php:31
 msgid "Starting update process (package mode)..."
-msgstr ""
+msgstr "正在启动更新进程（包模式）..."
 
 #: includes/update-processor.php:45
 msgid "Configuration mismatch or missing"
-msgstr ""
+msgstr "配置不匹配或缺失"
 
 #: includes/update-processor.php:46
 msgid "Update failed: Configuration mismatch or missing."
-msgstr ""
+msgstr "更新失败：配置不匹配或缺失。"
 
 #: includes/update-processor.php:54
 msgid "Update failed: Target theme not found."
-msgstr ""
+msgstr "更新失败：未找到目标主题。"
 
 #: includes/update-processor.php:76
 msgid "Could not read INT_VERSION in theme"
-msgstr ""
+msgstr "无法在主题中读取 INT_VERSION"
 
 #: includes/update-processor.php:77
-msgid "Update failed: Could not read INT_VERSION in background task. Is the theme active?"
-msgstr ""
+msgid ""
+"Update failed: Could not read INT_VERSION in background task. Is the theme "
+"active?"
+msgstr "更新失败：无法在后台任务中读取 INT_VERSION。主题是否激活？"
 
 #: includes/update-processor.php:86
 msgid "Update failed: Could not access upload directory."
-msgstr ""
+msgstr "更新失败：无法访问上传目录。"
 
 #: includes/update-processor.php:120
 msgid "Could not fetch remote version info"
-msgstr ""
+msgstr "无法获取远程版本信息"
 
 #: includes/update-processor.php:121
 msgid "Update failed: Could not fetch remote version info."
-msgstr ""
+msgstr "更新失败：无法获取远程版本信息。"
 
 #: includes/update-processor.php:124
 msgid "Found update information"
-msgstr ""
+msgstr "找到更新信息"
 
 #: includes/update-processor.php:132
 msgid "Remote info is missing package details"
-msgstr ""
+msgstr "远程信息缺少包详细信息"
 
 #: includes/update-processor.php:133
 msgid "Update failed: Remote information is incomplete for package update."
-msgstr ""
+msgstr "更新失败：远程信息不完整，无法进行包更新。"
 
 #: includes/update-processor.php:147
 #, php-format
 msgid "Update failed: Display version mismatch (Remote: %s, Local: %s)."
-msgstr ""
+msgstr "更新失败：显示版本不匹配（远程：%s，本地：%s）。"
 
 #: includes/update-processor.php:155
 msgid "No update needed. Remote version is not newer than current version."
-msgstr ""
+msgstr "无需更新。远程版本不比当前版本更新。"
 
 #: includes/update-processor.php:180
-msgid "Update failed: Could not get filesystem credentials. Check wp-config.php settings."
-msgstr ""
+msgid ""
+"Update failed: Could not get filesystem credentials. Check wp-config.php "
+"settings."
+msgstr "更新失败：无法获取文件系统凭据。检查 wp-config.php 设置。"
 
 #: includes/update-processor.php:191
-msgid "Update failed: Could not initialize filesystem. Check credentials/permissions."
-msgstr ""
+msgid ""
+"Update failed: Could not initialize filesystem. Check credentials/"
+"permissions."
+msgstr "更新失败：无法初始化文件系统。检查凭据/权限。"
 
 #: includes/update-processor.php:199
 msgid "Update failed: Filesystem object not available after initialization."
-msgstr ""
+msgstr "更新失败：初始化后文件系统对象不可用。"
 
 #: includes/update-processor.php:208
 msgid "Update failed: Could not access theme directory. Check permissions."
-msgstr ""
+msgstr "更新失败：无法访问主题目录。检查权限。"
 
 #: includes/update-processor.php:217
 msgid "Update failed: Could not write to theme directory. Check permissions."
-msgstr ""
+msgstr "更新失败：无法写入主题目录。检查权限。"
 
 #: includes/update-processor.php:225
 msgid "Step 1: Downloading update package..."
-msgstr ""
+msgstr "步骤 1：下载更新包..."
 
 #: includes/update-processor.php:233
 msgid "Failed to create temporary base directory"
-msgstr ""
+msgstr "无法创建临时基础目录"
 
 #: includes/update-processor.php:234
 msgid "Update failed: Could not create temporary base directory."
-msgstr ""
+msgstr "更新失败：无法创建临时基础目录。"
 
 #: includes/update-processor.php:241
 msgid "Failed to create temporary directory"
-msgstr ""
+msgstr "无法创建临时目录"
 
 #: includes/update-processor.php:242
 msgid "Update failed: Could not create temporary directory."
-msgstr ""
+msgstr "更新失败：无法创建临时目录。"
 
 #: includes/update-processor.php:261
 #, php-format
 msgid "Update failed: Could not download update package. Error: %s"
-msgstr ""
+msgstr "更新失败：无法下载更新包。错误：%s"
 
 #: includes/update-processor.php:265
 msgid "Verifying package integrity..."
-msgstr ""
+msgstr "正在验证包完整性..."
 
 #: includes/update-processor.php:273
 msgid "Update failed: Could not read downloaded package for verification."
-msgstr ""
+msgstr "更新失败：无法读取下载的包进行验证。"
 
 #: includes/update-processor.php:282
 msgid "Update failed: Package integrity check failed."
-msgstr ""
+msgstr "更新失败：包完整性检查失败。"
 
 #: includes/update-processor.php:290
 msgid "Update failed: Could not move downloaded package to temporary location."
-msgstr ""
+msgstr "更新失败：无法将下载的包移至临时位置。"
 
 #: includes/update-processor.php:296
 msgid "Extracting update package..."
-msgstr ""
+msgstr "正在解压更新包..."
 
 #: includes/update-processor.php:302
 msgid "Update failed: Could not create extraction directory."
-msgstr ""
+msgstr "更新失败：无法创建解压目录。"
 
 #: includes/update-processor.php:311
 #, php-format
 msgid "Update failed: Could not extract update package. Error: %s"
-msgstr ""
+msgstr "更新失败：无法解压更新包。错误：%s"
 
 #: includes/update-processor.php:327
 msgid "Download or extraction failed. Update aborted."
-msgstr ""
+msgstr "下载或解压失败。更新已中止。"
 
 #: includes/update-processor.php:333
 msgid "Update package downloaded and extracted"
-msgstr ""
+msgstr "更新包已下载并解压"
 
 #: includes/update-processor.php:342
 msgid "Step 2: Backup disabled, skipping..."
-msgstr ""
+msgstr "步骤 2：备份已禁用，跳过..."
 
 #: includes/update-processor.php:344
 msgid "Step 2: Creating backup..."
-msgstr ""
+msgstr "步骤 2：创建备份..."
 
 #: includes/update-processor.php:350
 msgid "Update failed: Could not create backup directory."
-msgstr ""
+msgstr "更新失败：无法创建备份目录。"
 
 #: includes/update-processor.php:357
 msgid "Update failed: Could not create specific backup directory."
-msgstr ""
+msgstr "更新失败：无法创建特定备份目录。"
 
 #: includes/update-processor.php:362
 msgid "Creating theme backup..."
-msgstr ""
+msgstr "正在创建主题备份..."
 
 #: includes/update-processor.php:371
 #, php-format
 msgid "Backup failed: %s"
-msgstr ""
+msgstr "备份失败：%s"
 
 #: includes/update-processor.php:372
 #, php-format
 msgid "Update failed: Could not backup theme. Error: %s"
-msgstr ""
+msgstr "更新失败：无法备份主题。错误：%s"
 
 #: includes/update-processor.php:377
 msgid "Backup completed successfully"
-msgstr ""
+msgstr "备份成功完成"
 
 #: includes/update-processor.php:381
 msgid "Step 3: Preparing staging area..."
-msgstr ""
+msgstr "步骤 3：准备暂存区域..."
 
 #: includes/update-processor.php:387
 msgid "Failed to create staging directory"
-msgstr ""
+msgstr "无法创建暂存目录"
 
 #: includes/update-processor.php:388
 msgid "Update failed: Could not create staging directory."
-msgstr ""
+msgstr "更新失败：无法创建暂存目录。"
 
 #: includes/update-processor.php:391
 msgid "Creating staging copy of theme..."
-msgstr ""
+msgstr "正在创建主题的暂存副本..."
 
 #: includes/update-processor.php:400
 #, php-format
 msgid "Failed to create staging copy: %s"
-msgstr ""
+msgstr "无法创建暂存副本：%s"
 
 #: includes/update-processor.php:401
 #, php-format
 msgid "Update failed: Could not copy theme to staging directory. Error: %s"
-msgstr ""
+msgstr "更新失败：无法将主题复制到暂存目录。错误：%s"
 
 #: includes/update-processor.php:405
 msgid "Staging area prepared successfully"
-msgstr ""
+msgstr "暂存区域准备成功"
 
 #: includes/update-processor.php:408
 msgid "Step 4: Applying updates to staging area..."
-msgstr ""
+msgstr "步骤 4：将更新应用到暂存区域..."
 
 #: includes/update-processor.php:462
 #, php-format
 msgid "Applied %d file updates to staging area"
-msgstr ""
+msgstr "已将 %d 个文件更新应用到暂存区域"
 
 #: includes/update-processor.php:468
 msgid "Step 6: Activating the new version..."
-msgstr ""
+msgstr "步骤 6：激活新版本..."
 
 #: includes/update-processor.php:499
 msgid "New version activated"
-msgstr ""
+msgstr "新版本已激活"
 
 #: includes/update-processor.php:502
 msgid "Step 7: Finalizing update..."
-msgstr ""
+msgstr "步骤 7：完成更新..."
 
 #: includes/update-processor.php:523
 #, php-format
-msgid "Update successful. Remote Internal Version: %s (Local INT_VERSION should reflect this after update)."
-msgstr ""
+msgid ""
+"Update successful. Remote Internal Version: %s (Local INT_VERSION should "
+"reflect this after update)."
+msgstr "更新成功。远程内部版本：%s（更新后本地 INT_VERSION 应显示此版本）。"
 
 #: includes/update-processor.php:524
 #, php-format
 msgid "Update successful to internal version %s"
-msgstr ""
+msgstr "成功更新到内部版本 %s"
 
 #: includes/update-processor.php:592
 msgid "Update failed. Rollback failed (Filesystem unavailable)."
-msgstr ""
+msgstr "更新失败。回滚失败（文件系统不可用）。"
 
 #: includes/update-processor.php:614
-msgid "Update failed. CRITICAL: Rollback failed (No backup available, theme directory missing). Manual intervention required."
-msgstr ""
+msgid ""
+"Update failed. CRITICAL: Rollback failed (No backup available, theme "
+"directory missing). Manual intervention required."
+msgstr "更新失败。严重：回滚失败（无可用备份，主题目录缺失）。需要手动干预。"
 
 #: includes/update-processor.php:617
-msgid "Update failed. Rollback skipped (No backup available, original theme directory untouched)."
-msgstr ""
+msgid ""
+"Update failed. Rollback skipped (No backup available, original theme "
+"directory untouched)."
+msgstr "更新失败。跳过回滚（无可用备份，原始主题目录未触及）。"
 
 #: includes/update-processor.php:633
-msgid "Update failed. Rollback failed (Could not delete existing theme directory). Manual intervention required."
-msgstr ""
+msgid ""
+"Update failed. Rollback failed (Could not delete existing theme directory). "
+"Manual intervention required."
+msgstr "更新失败。回滚失败（无法删除现有主题目录）。需要手动干预。"
 
 #: includes/update-processor.php:651
-msgid "Update failed. CRITICAL: Rollback failed during restore from backup. Manual intervention required."
-msgstr ""
+msgid ""
+"Update failed. CRITICAL: Rollback failed during restore from backup. Manual "
+"intervention required."
+msgstr "更新失败。严重：从备份恢复时回滚失败。需要手动干预。"
 
 #: includes/update-processor.php:655
 msgid "Update failed. Successfully rolled back to previous version."
-msgstr ""
+msgstr "更新失败。已成功回滚到先前版本。"
 
 #: includes/update-processor.php:690
 #, php-format
 msgid "Update failed: %s"
-msgstr ""
+msgstr "更新失败：%s"
 
 #: includes/update-processor.php:693 includes/update-processor.php:697
 msgid "Update in progress: "
-msgstr ""
+msgstr "更新进行中："
 
 #: includes/update-processor.php:694
 msgid "Update successful. "
-msgstr ""
+msgstr "更新成功。"
 
 #: includes/update-processor.php:712
 msgid "No update in progress"
-msgstr ""
+msgstr "没有正在进行的更新"
 
 #: includes/update-processor.php:738
 #, php-format
 msgid "Update process stalled at \"%s\". Server may have timed out."
-msgstr ""
+msgstr "更新进程在\"%s\"处停滞。服务器可能已超时。"
