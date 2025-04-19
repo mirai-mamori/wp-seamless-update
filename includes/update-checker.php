@@ -161,46 +161,82 @@ function wpsu_check_for_theme_update( $transient ) {
  * @return object|false 解码的 JSON 对象或失败时返回 false。
  */
 function wpsu_fetch_remote_version_info( $update_url ) {
+    // 记录尝试获取更新的URL，以便于调试
+    error_log( sprintf( 'WP Seamless Update: Attempting to fetch update info from %s', $update_url ) );
+    
+    // 增加超时时间到30秒，以应对慢速连接
     $response = wp_remote_get( $update_url, array(
-        'timeout' => 15, // 稍长的超时
+        'timeout' => 30, // 增加超时时间
         'sslverify' => true,
         'headers' => array( // 防止缓存问题
             'Cache-Control' => 'no-cache',
-            'Pragma' => 'no-cache'
+            'Pragma' => 'no-cache',
+            'User-Agent' => 'WordPress/' . get_bloginfo('version') . '; ' . get_bloginfo('url')
         )
     ));
 
     if ( is_wp_error( $response ) ) {
-        error_log( sprintf( 'WP Seamless Update: Failed to fetch update info from %s - Error: %s', $update_url, $response->get_error_message() ) );
+        $error_message = $response->get_error_message();
+        $error_code = $response->get_error_code();
+        error_log( sprintf( 'WP Seamless Update: Failed to fetch update info from %s - Error Code: %s, Message: %s', 
+            $update_url, $error_code, $error_message ) );
         return false;
     }
 
     $response_code = wp_remote_retrieve_response_code( $response );
     if ( $response_code !== 200 ) {
-         error_log( sprintf( 'WP Seamless Update: Failed to fetch update info from %s - HTTP Status Code: %s', $update_url, $response_code ) );
+        $response_message = wp_remote_retrieve_response_message( $response );
+        error_log( sprintf( 'WP Seamless Update: Failed to fetch update info from %s - HTTP Status: %s %s', 
+            $update_url, $response_code, $response_message ) );
         return false;
     }
 
     $body = wp_remote_retrieve_body( $response );
+    
+    // 记录返回的数据长度，以便调试
+    $body_length = strlen($body);
+    error_log( sprintf( 'WP Seamless Update: Received %d bytes from %s', $body_length, $update_url ) );
+    
+    // 如果内容为空，直接返回错误
+    if (empty($body)) {
+        error_log( 'WP Seamless Update: Empty response received from update URL' );
+        return false;
+    }
+    
+    // 尝试解码JSON
     $data = json_decode( $body );
 
     if ( json_last_error() !== JSON_ERROR_NONE ) {
-         error_log( sprintf( 'WP Seamless Update: Failed to decode JSON from %s - JSON Error: %s', $update_url, json_last_error_msg() ) );
+        $json_error = json_last_error_msg();
+        error_log( sprintf( 'WP Seamless Update: Failed to decode JSON from %s - JSON Error: %s', $update_url, $json_error ) );
+        
+        // 记录一些返回内容，帮助调试 (只记录前200个字符，避免日志过大)
+        $sample = substr($body, 0, 200);
+        error_log( sprintf( 'WP Seamless Update: Response sample: %s', $sample ) );
+        
+        return false;
+    }    // 基本验证（仅验证版本字段，让 update-processor 处理其他字段验证）
+    if ( ! isset( $data->display_version ) || ! isset( $data->internal_version ) ) {
+        error_log( sprintf( 'WP Seamless Update: Invalid JSON structure from %s. Missing required version fields.', $update_url ) );
         return false;
     }
-
-    // 基本验证
-    if ( ! isset( $data->display_version ) || ! isset( $data->internal_version ) || ! isset( $data->files ) || ! is_array($data->files) ) {
-         error_log( sprintf( 'WP Seamless Update: Invalid JSON structure from %s. Missing display_version, internal_version, or files array.', $update_url ) );
-        return false;
+    
+    // 记录更多信息以帮助调试
+    error_log( sprintf( 'WP Seamless Update: Successfully parsed update info: display_version=%s, internal_version=%s', 
+        $data->display_version, $data->internal_version ) );
+    
+    // 不再严格验证文件条目和其他字段，让 update-processor 决定如何处理它们
+    // 仅记录下是否存在可能在后续步骤中需要的字段
+    if ( ! isset( $data->package_url ) || ! isset( $data->package_hash ) ) {
+        error_log( 'WP Seamless Update: Warning - JSON lacks package_url or package_hash fields needed for package-based updates' );
     }
-     
-    // 验证文件条目
-    foreach ($data->files as $file) {
-        if (!is_object($file) || !isset($file->path) || !isset($file->hash) || !isset($file->url)) {
-            error_log( sprintf( 'WP Seamless Update: Invalid file entry in JSON from %s. Entry: %s', $update_url, print_r($file, true) ) );
-            return false; // 如果任何文件条目无效，则使整个检查失败
-        }
+    
+    if ( ! isset( $data->files ) || !is_array($data->files) ) {
+        error_log( 'WP Seamless Update: Warning - JSON lacks files array needed for updating' );
+    } elseif ( count($data->files) == 0 ) {
+        error_log( 'WP Seamless Update: Warning - JSON contains empty files array' );
+    } else {
+        error_log( sprintf( 'WP Seamless Update: JSON contains %d file entries', count($data->files) ) );
     }
 
     return $data;

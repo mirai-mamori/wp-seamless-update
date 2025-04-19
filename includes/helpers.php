@@ -11,28 +11,28 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 /**
- * 帮助函数，将 WP_Filesystem::dirlist 输出展平为相对路径。
+ * 将 WP_Filesystem::dirlist() 的递归结果展平成相对路径列表。
  *
- * @param array $dirlist 来自 $wp_filesystem->dirlist() 的输出。
- * @param string $prefix 内部用于递归。
- * @return array 相对文件路径数组。
+ * @param array $dirlist dirlist() 返回的数组。
+ * @param string $prefix 当前路径前缀（用于递归）。
+ * @return array 包含相对文件路径的扁平数组。
  */
-function wpsu_flatten_dirlist( $dirlist, $prefix = '' ) {
-    $files = array();
-    if ( ! is_array( $dirlist ) ) {
-        return $files;
+function wpsu_flatten_dirlist($dirlist, $prefix = '') {
+    $paths = [];
+    if (!is_array($dirlist)) {
+        return $paths;
     }
-    foreach ( $dirlist as $name => $details ) {
-        $relative_path = $prefix . $name;
-        if ( isset( $details['files'] ) && is_array( $details['files'] ) ) {
-            // 这是一个目录，递归
-            $files = array_merge( $files, wpsu_flatten_dirlist( $details['files'], $relative_path . '/' ) );
-        } else {
-            // 这是一个文件
-            $files[] = $relative_path;
+    foreach ($dirlist as $name => $details) {
+        $current_path = $prefix ? trailingslashit($prefix) . $name : $name;
+        if ($details['type'] === 'f') { // 文件
+            $paths[] = $current_path;
+        } elseif ($details['type'] === 'd') { // 目录
+            if (isset($details['files']) && is_array($details['files'])) {
+                $paths = array_merge($paths, wpsu_flatten_dirlist($details['files'], $current_path));
+            }
         }
     }
-    return $files;
+    return $paths;
 }
 
 /**
@@ -42,7 +42,7 @@ function wpsu_flatten_dirlist( $dirlist, $prefix = '' ) {
  * @param string $uploads_base 基本上传目录路径。
  * @param string $theme_slug 要清理的主题 slug。
  */
-function wpsu_cleanup_temp_dirs($wp_filesystem, $uploads_base, $theme_slug) {
+function wpsu_cleanup_temp_dirs($wp_filesystem, $uploads_base, $target_theme_slug) {
     // Add check for $wp_filesystem
     if ( ! $wp_filesystem ) {
         error_log("WP Seamless Update Cleanup: WP_Filesystem object is not available. Cannot cleanup temp dirs.");
@@ -53,8 +53,8 @@ function wpsu_cleanup_temp_dirs($wp_filesystem, $uploads_base, $theme_slug) {
     $staging_base = $uploads_base; // 临时目录直接位于上传基础目录中，带前缀
 
     $patterns = array(
-        $temp_base . $theme_slug . '-*',
-        $staging_base . 'wpsu-staging-' . $theme_slug . '-*'
+        $temp_base . $target_theme_slug . '-*',
+        $staging_base . 'wpsu-staging-' . $target_theme_slug . '-*'
     );
 
     foreach ($patterns as $pattern) {
@@ -68,8 +68,24 @@ function wpsu_cleanup_temp_dirs($wp_filesystem, $uploads_base, $theme_slug) {
             foreach ($items as $name => $details) {
                 if ($details['type'] === 'd' && fnmatch($search_pattern, $name)) {
                     $dir_to_delete = trailingslashit($base_dir) . $name;
-                    error_log("WP Seamless Update Cleanup: Deleting leftover directory: $dir_to_delete");
-                    $wp_filesystem->delete($dir_to_delete, true);
+                    $is_old = false;
+                    // 通过目录名解析时间戳
+                    $parts = explode('-', $name);
+                    $timestamp = end($parts);
+                    // 增加检查确保 $timestamp 是数字并且大于0，避免无效时间戳
+                    if (is_numeric($timestamp) && intval($timestamp) > 0 && (time() - intval($timestamp) > 3600)) {
+                        $is_old = true;
+                    } elseif (!is_numeric($timestamp) || intval($timestamp) <= 0) {
+                        // 如果目录名不包含有效时间戳，也视为旧目录进行清理，防止累积无效目录
+                        error_log("WP Seamless Update Cleanup: 发现无效或无时间戳的目录，标记为旧目录: $dir_to_delete");
+                        $is_old = true;
+                    }
+
+
+                    if ($is_old) {
+                        error_log("WP Seamless Update Cleanup: 删除旧的临时/暂存目录: $dir_to_delete");
+                        $wp_filesystem->delete($dir_to_delete, true);
+                    }
                 }
             }
         }
@@ -77,72 +93,49 @@ function wpsu_cleanup_temp_dirs($wp_filesystem, $uploads_base, $theme_slug) {
 }
 
 /**
- * 清理主题备份，只保留指定数量。
+ * 管理指定主题的备份目录，只保留指定数量的最新备份。
  *
+ * @global WP_Filesystem_Base $wp_filesystem
  * @param string $theme_slug 主题 slug。
- * @param string $backup_dir_base 备份的基本路径 (例如： wp-content/uploads/wpsu-backups/)。
+ * @param string $backup_dir_base 基础备份目录路径。
  * @param int $backups_to_keep 要保留的备份数量。
  */
 function wpsu_manage_backups( $theme_slug, $backup_dir_base, $backups_to_keep ) {
     global $wp_filesystem;
-    if ( ! $wp_filesystem || $backups_to_keep <= 0 ) {
-        return; // 文件系统未就绪或备份已禁用
-    }
-
-    error_log("WP Seamless Update: Managing backups for $theme_slug in $backup_dir_base, keeping $backups_to_keep.");
-
-    if ( ! $wp_filesystem->is_dir( $backup_dir_base ) ) {
-        error_log("WP Seamless Update: Base backup directory $backup_dir_base does not exist. Cannot manage backups.");
+    if ( ! $wp_filesystem || $backups_to_keep <= 0 || ! $wp_filesystem->is_dir( $backup_dir_base ) ) {
         return;
     }
 
-    $all_backups = $wp_filesystem->dirlist( $backup_dir_base );
-    if ( ! is_array( $all_backups ) ) {
-         error_log("WP Seamless Update: Failed to list contents of backup directory $backup_dir_base.");
-        return;
-    }
+    error_log("WP Seamless Update Cleanup: 管理备份目录 $backup_dir_base, 保留 $backups_to_keep 个备份。");
 
-    $theme_backups = array();
-    $prefix = $theme_slug . '-';
+    $backups = [];
+    $dir_list = $wp_filesystem->dirlist( $backup_dir_base, false, false ); // 非递归
 
-    foreach ( $all_backups as $name => $details ) {
-        // 检查是否是目录且与主题 slug 前缀匹配
-        if ( $details['type'] === 'd' && strpos( $name, $prefix ) === 0 ) {
-            // 提取时间戳
-            $timestamp_str = substr( $name, strlen( $prefix ) );
-            if ( is_numeric( $timestamp_str ) ) {
-                $theme_backups[ intval( $timestamp_str ) ] = $name; // 存储 timestamp => dirname
+    if ( is_array( $dir_list ) ) {
+        foreach ( $dir_list as $item ) {
+            // 检查是否是目录，并且名称以 "themeslug-" 开头
+            if ( $item['type'] === 'd' && strpos( $item['name'], $theme_slug . '-' ) === 0 ) {
+                // 尝试从目录名中提取时间戳
+                $parts = explode( '-', $item['name'] );
+                $timestamp = end( $parts );
+                if ( is_numeric( $timestamp ) ) {
+                    $backups[ intval( $timestamp ) ] = trailingslashit( $backup_dir_base ) . $item['name'];
+                }
             }
         }
     }
 
-    if ( count( $theme_backups ) <= $backups_to_keep ) {
-        error_log("WP Seamless Update: Found " . count( $theme_backups ) . " backups for $theme_slug, which is within the limit of $backups_to_keep. No old backups to delete.");
-        return; // 无需删除任何内容
-    }
+    if ( count( $backups ) > $backups_to_keep ) {
+        krsort( $backups ); // 按时间戳降序排序（最新的在前）
+        $backups_to_delete = array_slice( $backups, $backups_to_keep ); // 获取需要删除的旧备份
 
-    // 按时间戳排序（最旧的在前面）
-    ksort( $theme_backups );
-
-    $backups_to_delete_count = count( $theme_backups ) - $backups_to_keep;
-    error_log("WP Seamless Update: Found " . count( $theme_backups ) . " backups for $theme_slug. Need to delete $backups_to_delete_count oldest backups.");
-
-    $deleted_count = 0;
-    foreach ( $theme_backups as $timestamp => $dir_name ) {
-        if ( $deleted_count >= $backups_to_delete_count ) {
-            break; // 已删除足够数量
+        foreach ( $backups_to_delete as $timestamp => $dir_path ) {
+            error_log( "WP Seamless Update Cleanup: 删除旧备份目录: $dir_path (Timestamp: $timestamp)" );
+            $wp_filesystem->delete( $dir_path, true );
         }
-
-        $dir_to_delete = trailingslashit( $backup_dir_base ) . $dir_name;
-        error_log("WP Seamless Update: Deleting old backup directory: $dir_to_delete");
-        if ( ! $wp_filesystem->delete( $dir_to_delete, true ) ) {
-            error_log("WP Seamless Update: Failed to delete old backup directory: $dir_to_delete");
-            // 记录错误但继续尝试删除其他
-        } else {
-            $deleted_count++;
-        }
+    } else {
+        error_log("WP Seamless Update Cleanup: 当前备份数量 (" . count($backups) . ") 未超过限制 ($backups_to_keep)。无需删除。");
     }
-    error_log("WP Seamless Update: Finished managing backups for $theme_slug. Deleted $deleted_count old backups.");
 }
 
 /**

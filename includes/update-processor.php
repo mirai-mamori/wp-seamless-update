@@ -14,7 +14,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 /**
  * 执行无缝主题更新（由 WP Cron 调用）。
- * 实现模拟的 A/B 更新过程。
+ * 实现模拟的 A/B 更新过程，使用单个更新包。
  *
  * @param string $target_theme_slug 要更新的主题的 slug。
  */
@@ -23,12 +23,12 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
     @set_time_limit(300);
     
     // 增加详细的开始日志，包含环境信息
-    error_log("WP Seamless Update Cron: ====== 开始为主题 $target_theme_slug 执行更新 ======");
+    error_log("WP Seamless Update Cron: ====== 开始为主题 $target_theme_slug 执行更新 (使用更新包) ======");
     error_log("WP Seamless Update: 环境信息 - PHP版本: " . phpversion() . ", WordPress版本: " . get_bloginfo('version') . ", 内存限制: " . ini_get('memory_limit') . ", 最大执行时间: " . ini_get('max_execution_time') . "秒");
     
     // 清除旧的进度信息并设置初始进度
     wpsu_clear_update_progress($target_theme_slug);
-    wpsu_set_update_progress($target_theme_slug, __('Starting update process...', 'wp-seamless-update'), 0);
+    wpsu_set_update_progress($target_theme_slug, __('Starting update process (package mode)...', 'wp-seamless-update'), 0);
     
     // 添加错误处理
     try {
@@ -36,7 +36,9 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
     $options = get_option( WPSU_OPTION_NAME, array() );
     $configured_theme_slug = isset( $options['target_theme'] ) ? $options['target_theme'] : null;
     $update_url = isset( $options['update_url'] ) ? $options['update_url'] : null;
-    $backups_to_keep = isset( $options['backups_to_keep'] ) ? absint($options['backups_to_keep']) : WPSU_DEFAULT_BACKUPS_TO_KEEP;    // --- 初始检查 ---
+    $backups_to_keep = isset( $options['backups_to_keep'] ) ? absint($options['backups_to_keep']) : WPSU_DEFAULT_BACKUPS_TO_KEEP;
+    
+    // --- 初始检查 ---
     if ( $target_theme_slug !== $configured_theme_slug || ! $update_url ) {
         error_log("WP Seamless Update Cron: 配置不匹配或缺失，目标主题: $target_theme_slug, 已配置主题: $configured_theme_slug, 更新URL: " . ($update_url ? $update_url : '未设置'));
         wpsu_clear_update_transient($target_theme_slug); // 清除任何可能过时的通知
@@ -67,7 +69,8 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
     if ( $active_theme->get_stylesheet() === $target_theme_slug && defined('INT_VERSION') ) {
         $current_internal_version = INT_VERSION;
         error_log("WP Seamless Update Cron: 成功读取活动主题 $target_theme_slug 的 INT_VERSION = $current_internal_version");
-    }    if ( $current_internal_version === null ) {
+    }
+    if ( $current_internal_version === null ) {
         error_log("WP Seamless Update Cron: 严重错误 - 在cron上下文中无法读取主题 $target_theme_slug 的 INT_VERSION。主题可能未激活或常量未定义。中止更新。");
         wpsu_clear_update_transient($target_theme_slug); // 清除通知，因为更新无法继续
         wpsu_set_update_progress($target_theme_slug, __('Could not read INT_VERSION in theme', 'wp-seamless-update'), 100, true);
@@ -86,22 +89,28 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
     $uploads_base = trailingslashit($upload_dir_info['basedir']);
     $timestamp = time();
 
-    // 临时下载目录
+    // 临时下载目录 (现在用于存放下载的包和解压后的文件)
     $temp_dir_base = $uploads_base . WPSU_TEMP_UPDATE_DIR_BASE . '/';
-    $temp_dir = $temp_dir_base . $target_theme_slug . '-' . $timestamp . '/';
-    error_log("WP Seamless Update Cron: 临时下载目录: $temp_dir");
+    $temp_dir = $temp_dir_base . $target_theme_slug . '-' . $timestamp . '/'; // 主临时目录
+    $temp_package_file = $temp_dir . $target_theme_slug . '-update.zip'; // 下载的包文件路径
+    $temp_extract_dir = $temp_dir . 'extracted/'; // 解压目录
+    error_log("WP Seamless Update Cron: 临时工作目录: $temp_dir");
+    error_log("WP Seamless Update Cron: 临时包文件: $temp_package_file");
+    error_log("WP Seamless Update Cron: 临时解压目录: $temp_extract_dir");
 
     // 备份目录
     $backup_dir_base = $uploads_base . WPSU_BACKUP_DIR_BASE . '/';
     $backup_dir = $backup_dir_base . $target_theme_slug . '-' . $timestamp . '/';
     error_log("WP Seamless Update Cron: 备份目录: $backup_dir");
 
-    // 临时目录（更新应用于此处，然后切换）
+    // 暂存目录（更新应用于此处，然后切换）
     $staging_dir = $uploads_base . 'wpsu-staging-' . $target_theme_slug . '-' . $timestamp . '/';
     error_log("WP Seamless Update Cron: 暂存目录: $staging_dir");
 
     // 清理之前失败尝试中可能遗留的临时目录（可选但是良好做法）
-    wpsu_cleanup_temp_dirs($wp_filesystem, $uploads_base, $target_theme_slug);    // 重新获取远程信息以确保它是最新的
+    wpsu_cleanup_temp_dirs($wp_filesystem, $uploads_base, $target_theme_slug);
+
+    // 重新获取远程信息以确保它是最新的
     wpsu_set_update_progress($target_theme_slug, __('Checking for updates...', 'wp-seamless-update'), 5);
     error_log("WP Seamless Update Cron: 获取远程版本信息从 $update_url");
     $remote_info = wpsu_fetch_remote_version_info( $update_url );
@@ -116,6 +125,19 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
     
     // 记录远程版本信息
     error_log("WP Seamless Update Cron: 远程信息 - 显示版本: {$remote_info->display_version}, 内部版本: {$remote_info->internal_version}");
+    // --- 新增：检查远程信息是否包含包信息 ---
+    if ( ! isset($remote_info->package_url) || ! isset($remote_info->package_hash) || ! isset($remote_info->files) || ! is_array($remote_info->files) ) {
+        error_log("WP Seamless Update Cron: 远程信息缺少必要的更新包信息 (package_url, package_hash, files)。中止。");
+        wpsu_clear_update_transient($target_theme_slug);
+        wpsu_set_update_progress($target_theme_slug, __('Remote info is missing package details', 'wp-seamless-update'), 100, true);
+        update_option( 'wpsu_last_check_status_' . $target_theme_slug, __( 'Update failed: Remote information is incomplete for package update.', 'wp-seamless-update' ) );
+        return;
+    }
+    error_log("WP Seamless Update Cron: 远程包URL: {$remote_info->package_url}");
+    error_log("WP Seamless Update Cron: 远程包哈希: {$remote_info->package_hash}");
+    error_log("WP Seamless Update Cron: 包内文件数: " . count($remote_info->files));
+    // --- 结束新增检查 ---
+    
     error_log("WP Seamless Update Cron: 本地信息 - 显示版本: " . $theme->get('Version') . ", 内部版本: $current_internal_version");
 
     // 在继续之前进行最终版本检查（使用 INT_VERSION）
@@ -141,6 +163,10 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
     if ( ! function_exists('request_filesystem_credentials') || ! function_exists('WP_Filesystem') ) {
         require_once( ABSPATH . 'wp-admin/includes/file.php' );
     }
+    // --- 新增：确保解压函数可用 ---
+    if ( ! function_exists('unzip_file') ) {
+        require_once( ABSPATH . 'wp-admin/includes/file.php' );
+    }
     
     // 记录文件系统方法
     $fs_method = get_filesystem_method();
@@ -150,8 +176,7 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
     $creds = request_filesystem_credentials( site_url(), '', false, false, null );
     if ( false === $creds ) {
         error_log("WP Seamless Update Cron: 无法获取文件系统凭据（非交互式）。检查wp-config.php中是否定义了FS_METHOD。中止。");
-        // 在 cron 中没有文件系统访问权限，无法继续
-        wpsu_clear_update_transient($target_theme_slug); // 清除通知，因为更新无法继续
+        wpsu_clear_update_transient($target_theme_slug);
         update_option( 'wpsu_last_check_status_' . $target_theme_slug, __( 'Update failed: Could not get filesystem credentials. Check wp-config.php settings.', 'wp-seamless-update' ) );
         return;
     }
@@ -161,7 +186,6 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
     global $wp_filesystem; // Declare global before calling WP_Filesystem
 
     if ( ! WP_Filesystem( $creds ) ) {
-        // WP_Filesystem() failed to initialize, maybe couldn't connect based on creds
         error_log("WP Seamless Update Cron: WP_Filesystem() 返回 false。检查文件系统权限/方法。中止。");
         wpsu_clear_update_transient($target_theme_slug);
         update_option( 'wpsu_last_check_status_' . $target_theme_slug, __( 'Update failed: Could not initialize filesystem. Check credentials/permissions.', 'wp-seamless-update' ) );
@@ -195,11 +219,13 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
     } else {
         $wp_filesystem->delete($test_file);
         error_log("WP Seamless Update Cron: 文件系统写入测试成功");
-    }    // --- 第 1 步：下载文件到临时目录 ---
-    wpsu_set_update_progress($target_theme_slug, __('Step 1: Preparing to download files...', 'wp-seamless-update'), 15);
-    error_log("WP Seamless Update Cron: 第1步 - 开始下载文件到 $temp_dir");
+    }
 
-    // --- 新增：确保父目录存在 ---
+    // --- 第 1 步：下载并解压更新包 ---
+    wpsu_set_update_progress($target_theme_slug, __('Step 1: Downloading update package...', 'wp-seamless-update'), 15);
+    error_log("WP Seamless Update Cron: 第1步 - 开始下载更新包到 $temp_package_file");
+
+    // --- 确保临时目录存在 ---
     if ( ! $wp_filesystem->is_dir( $temp_dir_base ) ) {
         error_log("WP Seamless Update Cron: 临时目录的父目录 $temp_dir_base 不存在，尝试创建。");
         if ( ! $wp_filesystem->mkdir( $temp_dir_base, FS_CHMOD_DIR, true ) ) { // 使用递归创建
@@ -210,104 +236,105 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
         }
         error_log("WP Seamless Update Cron: 成功创建临时目录的父目录 $temp_dir_base。");
     }
-    // --- 结束新增代码 ---
-
     if ( ! $wp_filesystem->mkdir( $temp_dir, FS_CHMOD_DIR ) ) {
-        error_log("WP Seamless Update Cron: 创建临时目录失败: $temp_dir。中止。");
+        error_log("WP Seamless Update Cron: 创建临时工作目录失败: $temp_dir。中止。");
         wpsu_set_update_progress($target_theme_slug, __('Failed to create temporary directory', 'wp-seamless-update'), 100, true);
         update_option( 'wpsu_last_check_status_' . $target_theme_slug, __( 'Update failed: Could not create temporary directory.', 'wp-seamless-update' ) );
         return;
     }
+    // --- 结束确保目录 ---
 
-    $downloaded_files = array();
-    $download_ok = true;
+    $download_ok = false; // 假设失败
+    $package_local_path = null; // 下载的包的本地路径
+
     if ( ! function_exists('download_url') ) { // 确保 download_url 可用
         require_once( ABSPATH . 'wp-admin/includes/file.php' );
     }
-    
-    error_log("WP Seamless Update Cron: 总共需要下载 " . count($remote_info->files) . " 个文件");
-    wpsu_set_update_progress($target_theme_slug, sprintf(__('Downloading %d files...', 'wp-seamless-update'), count($remote_info->files)), 20);
-    
-    $file_count = count($remote_info->files);
-    $files_downloaded = 0;
 
-    foreach ( $remote_info->files as $file_info ) {
-        $relative_path = ltrim( wp_normalize_path($file_info->path), '/' );
-        $temp_file_path = trailingslashit($temp_dir) . $relative_path;
-        $remote_file_url = $file_info->url;
-        $remote_file_hash = $file_info->hash; // 假设是 SHA1
+    error_log("WP Seamless Update Cron: 下载更新包从 {$remote_info->package_url}");
+    $package_local_path = download_url( $remote_info->package_url, 120 ); // 增加超时时间到120秒
 
-        error_log("WP Seamless Update Cron: 下载文件 $relative_path 从 $remote_file_url");
+    if ( is_wp_error( $package_local_path ) ) {
+        $error_message = $package_local_path->get_error_message();
+        error_log( "WP Seamless Update Cron: 下载更新包 {$remote_info->package_url} 失败。错误: " . $error_message );
+        update_option( 'wpsu_last_check_status_' . $target_theme_slug, 
+            sprintf( __( 'Update failed: Could not download update package. Error: %s', 'wp-seamless-update' ), 
+            $error_message ) );
+    } else {
+        error_log("WP Seamless Update Cron: 更新包下载成功到: $package_local_path");
+        wpsu_set_update_progress($target_theme_slug, __('Verifying package integrity...', 'wp-seamless-update'), 25);
 
-        // 确保临时目录中父目录存在
-        $parent_dir = dirname( $temp_file_path );
-        if ( ! $wp_filesystem->is_dir( $parent_dir ) ) {
-            if ( ! $wp_filesystem->mkdir( $parent_dir, FS_CHMOD_DIR, true ) ) {
-                error_log( "WP Seamless Update Cron: 创建临时目录中的父目录失败: {$parent_dir}。中止下载。" );
-                $download_ok = false;
-                break;
+        // 下载后验证哈希 (假设服务器提供的是 SHA1 哈希)
+        $package_content = $wp_filesystem->get_contents( $package_local_path );
+        if ($package_content === false) {
+             error_log( "WP Seamless Update Cron: 无法读取下载的包文件 {$package_local_path} 进行哈希验证。中止。" );
+             $wp_filesystem->delete( $package_local_path ); // 清理失败的下载
+             update_option( 'wpsu_last_check_status_' . $target_theme_slug, 
+                __( 'Update failed: Could not read downloaded package for verification.', 'wp-seamless-update' ) );
+        } else {
+            $downloaded_hash = sha1( $package_content );
+            unset($package_content); // 释放内存
+
+            if ( $downloaded_hash !== $remote_info->package_hash ) {
+                error_log( "WP Seamless Update Cron: 下载的包哈希值不匹配。期望: {$remote_info->package_hash}, 实际: {$downloaded_hash}。中止。" );
+                $wp_filesystem->delete( $package_local_path ); // 清理损坏的下载
+                update_option( 'wpsu_last_check_status_' . $target_theme_slug, 
+                    __( 'Update failed: Package integrity check failed.', 'wp-seamless-update' ) );
+            } else {
+                error_log("WP Seamless Update Cron: 包哈希验证成功。");
+                // 将验证后的包移动到我们的临时目录中
+                if ( ! $wp_filesystem->move( $package_local_path, $temp_package_file, true ) ) {
+                    error_log( "WP Seamless Update Cron: 无法将验证的包从 {$package_local_path} 移动到 {$temp_package_file}。中止。" );
+                    if ($wp_filesystem->exists($package_local_path)) $wp_filesystem->delete( $package_local_path ); // 清理
+                    update_option( 'wpsu_last_check_status_' . $target_theme_slug, 
+                        __( 'Update failed: Could not move downloaded package to temporary location.', 'wp-seamless-update' ) );
+                } else {
+                    $package_local_path = $temp_package_file; // 更新路径为最终位置
+                    error_log("WP Seamless Update Cron: 成功将包移动到 $package_local_path");
+                    
+                    // --- 解压包 ---
+                    wpsu_set_update_progress($target_theme_slug, __('Extracting update package...', 'wp-seamless-update'), 30);
+                    error_log("WP Seamless Update Cron: 开始解压包 $package_local_path 到 $temp_extract_dir");
+                    
+                    // 创建解压目录
+                    if ( ! $wp_filesystem->mkdir( $temp_extract_dir, FS_CHMOD_DIR ) ) {
+                        error_log("WP Seamless Update Cron: 创建解压目录失败: $temp_extract_dir。中止。");
+                        update_option( 'wpsu_last_check_status_' . $target_theme_slug, __( 'Update failed: Could not create extraction directory.', 'wp-seamless-update' ) );
+                    } else {
+                        // 使用 WP_Filesystem 解压
+                        $unzip_result = unzip_file( $package_local_path, $temp_extract_dir );
+
+                        if ( is_wp_error( $unzip_result ) ) {
+                            $error_message = $unzip_result->get_error_message();
+                            error_log( "WP Seamless Update Cron: 解压包 {$package_local_path} 失败。错误: " . $error_message );
+                            update_option( 'wpsu_last_check_status_' . $target_theme_slug, 
+                                sprintf( __( 'Update failed: Could not extract update package. Error: %s', 'wp-seamless-update' ), 
+                                $error_message ) );
+                        } else {
+                            error_log("WP Seamless Update Cron: 包解压成功到 $temp_extract_dir");
+                            $download_ok = true; // 只有到这里才算成功
+                        }
+                    }
+                }
             }
         }
+    }
 
-        $temp_download = download_url( $remote_file_url, 60 ); // 增加超时时间到60秒
-
-        if ( is_wp_error( $temp_download ) ) {
-            $error_message = $temp_download->get_error_message();
-            error_log( "WP Seamless Update Cron: 下载 {$remote_file_url} 失败。错误: " . $error_message );
-            $download_ok = false;
-            update_option( 'wpsu_last_check_status_' . $target_theme_slug, 
-                sprintf( __( 'Update failed: Could not download %s. Error: %s', 'wp-seamless-update' ), 
-                $relative_path, $error_message ) );
-            break;
-        }
-
-        // 下载后验证哈希（使用与服务器相同的哈希算法 - 此处为 SHA1）
-        $downloaded_content = $wp_filesystem->get_contents( $temp_download );
-        if ($downloaded_content === false) {
-             error_log( "WP Seamless Update Cron: 无法读取下载的临时文件 {$temp_download} 进行哈希验证。中止。" );
-             $wp_filesystem->delete( $temp_download ); // 清理失败的下载
-             $download_ok = false;
-             update_option( 'wpsu_last_check_status_' . $target_theme_slug, 
-                sprintf( __( 'Update failed: Could not read downloaded file %s for verification.', 'wp-seamless-update' ), 
-                $relative_path ) );
-             break;
-        }
-        $downloaded_hash = sha1( $downloaded_content );
-
-        if ( $downloaded_hash !== $remote_file_hash ) {
-            error_log( "WP Seamless Update Cron: 下载文件 {$relative_path} 哈希值不匹配。期望: {$remote_file_hash}, 实际: {$downloaded_hash}。中止。" );
-            $wp_filesystem->delete( $temp_download ); // 清理损坏的下载
-            $download_ok = false;
-            update_option( 'wpsu_last_check_status_' . $target_theme_slug, 
-                sprintf( __( 'Update failed: File integrity check failed for %s.', 'wp-seamless-update' ), 
-                $relative_path ) );
-            break;
-        }
-
-        // 将已验证的下载移动到临时目录中的最终位置
-        if ( ! $wp_filesystem->move( $temp_download, $temp_file_path, true ) ) {
-             error_log( "WP Seamless Update Cron: 无法将验证的下载文件从 {$temp_download} 移动到 {$temp_file_path}。中止。" );
-             if ($wp_filesystem->exists($temp_download)) $wp_filesystem->delete( $temp_download ); // 清理
-             $download_ok = false;
-             update_option( 'wpsu_last_check_status_' . $target_theme_slug, 
-                sprintf( __( 'Update failed: Could not move downloaded file %s to temporary location.', 'wp-seamless-update' ), 
-                $relative_path ) );
-             break;
-        }
-        $downloaded_files[$relative_path] = $temp_file_path; // 记录
-    }    if ( ! $download_ok ) {
-        error_log("WP Seamless Update Cron: 下载阶段失败。清理临时目录 $temp_dir。");
-        $wp_filesystem->delete( $temp_dir, true );
+    if ( ! $download_ok ) {
+        error_log("WP Seamless Update Cron: 下载或解压阶段失败。清理临时目录 $temp_dir。");
+        $wp_filesystem->delete( $temp_dir, true ); // 会删除包和可能的解压内容
         wpsu_clear_update_transient($target_theme_slug); // 清除通知，因为更新失败
-        wpsu_set_update_progress($target_theme_slug, __('Download failed. Update aborted.', 'wp-seamless-update'), 100, true);
+        wpsu_set_update_progress($target_theme_slug, __('Download or extraction failed. Update aborted.', 'wp-seamless-update'), 100, true);
         return;
     }
-    error_log("WP Seamless Update Cron: 第1步 - 下载完成。成功下载 " . count($downloaded_files) . " 个文件。");
+    error_log("WP Seamless Update Cron: 第1步 - 下载和解压完成。");
     wpsu_set_update_progress(
         $target_theme_slug,
-        sprintf(__('Successfully downloaded %d files', 'wp-seamless-update'), count($downloaded_files)),
+        __('Update package downloaded and extracted', 'wp-seamless-update'),
         40
-    );    // --- 第 2 步：备份实时主题 ---
+    );
+
+    // --- 第 2 步：备份实时主题 ---
     if ($backups_to_keep <= 0) {
          error_log("WP Seamless Update Cron: 第2步 - 备份已禁用。跳过备份。");
          $backup_ok = true; // 如果禁用，则视为成功
@@ -331,7 +358,8 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
             return;
         }
 
-        error_log("WP Seamless Update Cron: 开始复制主题文件进行备份");        wpsu_set_update_progress($target_theme_slug, __('Creating theme backup...', 'wp-seamless-update'), 50);
+        error_log("WP Seamless Update Cron: 开始复制主题文件进行备份");
+        wpsu_set_update_progress($target_theme_slug, __('Creating theme backup...', 'wp-seamless-update'), 50);
         $backup_result = copy_dir( $theme_root, $backup_dir ); // 隐式使用 WP_Filesystem
 
         if ( is_wp_error( $backup_result ) || $backup_result === false ) {
@@ -347,7 +375,9 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
         $backup_ok = true;
         error_log("WP Seamless Update Cron: 第2步 - 备份完成。");
         wpsu_set_update_progress($target_theme_slug, __('Backup completed successfully', 'wp-seamless-update'), 55);
-    }    // --- 第 3 步：通过复制实时主题创建临时目录 ---
+    }
+
+    // --- 第 3 步：通过复制实时主题创建暂存目录 ---
     wpsu_set_update_progress($target_theme_slug, __('Step 3: Preparing staging area...', 'wp-seamless-update'), 60);
     error_log("WP Seamless Update Cron: 第3步 - 创建暂存目录 $staging_dir (复制 $theme_root)");
     if ( ! $wp_filesystem->mkdir( $staging_dir, FS_CHMOD_DIR ) ) {
@@ -357,7 +387,8 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
          wpsu_set_update_progress($target_theme_slug, __('Failed to create staging directory', 'wp-seamless-update'), 100, true);
          update_option( 'wpsu_last_check_status_' . $target_theme_slug, __( 'Update failed: Could not create staging directory.', 'wp-seamless-update' ) );
          return;
-    }    wpsu_set_update_progress($target_theme_slug, __('Creating staging copy of theme...', 'wp-seamless-update'), 65);
+    }
+    wpsu_set_update_progress($target_theme_slug, __('Creating staging copy of theme...', 'wp-seamless-update'), 65);
     $copy_to_staging_result = copy_dir( $theme_root, $staging_dir );
     if ( is_wp_error( $copy_to_staging_result ) || $copy_to_staging_result === false ) {
         $error_msg = is_wp_error($copy_to_staging_result) ? $copy_to_staging_result->get_error_message() : 'copy_dir returned false';
@@ -373,85 +404,68 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
     error_log("WP Seamless Update Cron: 第3步 - 暂存目录创建完成。");
     wpsu_set_update_progress($target_theme_slug, __('Staging area prepared successfully', 'wp-seamless-update'), 70);
 
-    // --- 第 4 步：将更新（来自临时目录）和删除应用到临时目录 ---
-    error_log("WP Seamless Update Cron: 第 4 步 - 将更新应用到临时目录 $staging_dir");
+    // --- 第 4 步：将更新（来自解压目录）应用到暂存目录 ---
+    wpsu_set_update_progress($target_theme_slug, __('Step 4: Applying updates to staging area...', 'wp-seamless-update'), 75);
+    error_log("WP Seamless Update Cron: 第 4 步 - 将更新从 $temp_extract_dir 应用到暂存目录 $staging_dir");
     $apply_ok = true;
-    $files_updated_count = 0;
-    $files_deleted_count = 0;
+    $files_applied_count = 0;
 
-    // 获取新版本中预期的文件列表（相对路径）
-    $remote_file_paths = array();
+    // 遍历远程信息中列出的包内文件
     foreach ($remote_info->files as $file_info) {
-        $remote_file_paths[] = ltrim( wp_normalize_path($file_info->path), '/' );
-    }
-    $remote_file_paths_set = array_flip($remote_file_paths); // 用于快速查找
+        // 兼容旧格式（对象）和新格式（仅路径字符串）
+        $relative_path = is_object($file_info) ? ltrim( wp_normalize_path($file_info->path), '/' ) : ltrim( wp_normalize_path($file_info), '/' );
+        
+        $source_file = trailingslashit($temp_extract_dir) . $relative_path;
+        $dest_file = trailingslashit($staging_dir) . $relative_path;
+        $dest_parent_dir = dirname($dest_file);
 
-    // 应用已下载的文件（从临时移动到临时目录）
-    foreach ($downloaded_files as $relative_path => $temp_file_path) {
-        $staging_file_path = trailingslashit($staging_dir) . $relative_path;
-        $staging_parent_dir = dirname($staging_file_path);
+        // 检查源文件是否存在于解压目录中
+        if ( ! $wp_filesystem->exists( $source_file ) ) {
+            error_log( "WP Seamless Update Cron: 警告 - 包清单中列出的文件在解压目录中未找到: $relative_path。跳过此文件。" );
+            // 可能不是致命错误，但需要记录
+            continue; 
+        }
 
-        // 确保临时目录中父目录存在
-        if ( ! $wp_filesystem->is_dir( $staging_parent_dir ) ) {
-            if ( ! $wp_filesystem->mkdir( $staging_parent_dir, FS_CHMOD_DIR, true ) ) {
-                error_log( "WP Seamless Update Cron: 无法在临时目录中创建父目录: {$staging_parent_dir}。中止应用。" );
+        // 确保暂存目录中父目录存在
+        if ( ! $wp_filesystem->is_dir( $dest_parent_dir ) ) {
+            if ( ! $wp_filesystem->mkdir( $dest_parent_dir, FS_CHMOD_DIR, true ) ) {
+                error_log( "WP Seamless Update Cron: 无法在暂存目录中创建父目录: {$dest_parent_dir}。中止应用。" );
                 $apply_ok = false;
                 break;
             }
         }
 
-        // 将文件从临时移动到临时目录，如果存在则覆盖
-        if ( ! $wp_filesystem->move( $temp_file_path, $staging_file_path, true ) ) {
-            error_log( "WP Seamless Update Cron: 无法将文件从临时目录 {$temp_file_path} 移动到临时目录 {$staging_file_path}。中止应用。" );
+        // 将文件从解压目录移动到暂存目录，如果存在则覆盖
+        // 注意：这里使用 move 比 copy 更高效，因为解压目录是临时的
+        if ( ! $wp_filesystem->move( $source_file, $dest_file, true ) ) {
+            error_log( "WP Seamless Update Cron: 无法将文件从解压目录 {$source_file} 移动到暂存目录 {$dest_file}。中止应用。" );
             $apply_ok = false;
             break;
         }
-        $files_updated_count++;
+        $files_applied_count++;
         // 不要记录每个文件的移动，太详细了。稍后记录摘要。
     }
 
-    // 如果应用仍然正常，则处理文件删除
-    if ($apply_ok) {
-        error_log("WP Seamless Update Cron: 检查临时目录中需要删除的文件。");
-        $staging_files_list = $wp_filesystem->dirlist( $staging_dir, true, true ); // 递归，包括隐藏文件
-
-        if ($staging_files_list === false) {
-             error_log("WP Seamless Update Cron: 无法列出临时目录 $staging_dir 中的文件以进行删除检查。跳过删除操作。");
-             // 决定是否关键 - 也许不删除继续？现在，继续但记录它。
-        } else {
-            // 将 dirlist 结果展平为相对路径
-            $local_relative_paths = wpsu_flatten_dirlist($staging_files_list);
-
-            foreach ($local_relative_paths as $local_relative_path) {
-                if ( ! isset( $remote_file_paths_set[$local_relative_path] ) ) {
-                    // 此本地文件不在远程清单中，删除它
-                    $file_to_delete = trailingslashit($staging_dir) . $local_relative_path;
-                    if ( $wp_filesystem->exists( $file_to_delete ) ) { // 删除前检查存在性
-                        error_log("WP Seamless Update Cron: 删除不在远程清单中的文件/目录: $local_relative_path");
-                        if ( ! $wp_filesystem->delete( $file_to_delete, true ) ) { // 递归删除目录
-                            error_log("WP Seamless Update Cron: 无法从临时目录删除 $file_to_delete。中止应用。");
-                            $apply_ok = false;
-                            break; // 失败时停止删除过程
-                        }
-                        $files_deleted_count++;
-                    }
-                }
-            }
-        }
-    }
+    // --- 注意：不再需要删除文件逻辑 ---
+    // 因为我们是从一个干净的实时副本开始，并且只覆盖/添加包中的文件。
+    // 如果需要完全同步（包括删除），则需要服务器提供完整的最终文件列表，
+    // 然后在此处添加一个比较和删除的步骤。当前逻辑是“部分更新”。
 
     if ( ! $apply_ok ) {
-        error_log("WP Seamless Update Cron: 第 4 步 - 将更新应用到临时目录失败。正在回滚。");
-        wpsu_rollback_update( $target_theme_slug, $backup_dir, $theme_root, $staging_dir, $temp_dir ); // 回滚处理清理
+        error_log("WP Seamless Update Cron: 第 4 步 - 将更新应用到暂存目录失败。正在回滚。");
+        // 传递 $temp_dir 用于清理，它包含了 $temp_extract_dir 和 $temp_package_file
+        wpsu_rollback_update( $target_theme_slug, $backup_dir, $theme_root, $staging_dir, $temp_dir ); 
         // 回滚函数清除 transient
         return;
     }
-    error_log("WP Seamless Update Cron: 第 4 步 - 应用完成。已更新/添加: $files_updated_count, 已删除: $files_deleted_count。");
+    error_log("WP Seamless Update Cron: 第 4 步 - 应用完成。已应用/覆盖 $files_applied_count 个文件。");
+    wpsu_set_update_progress($target_theme_slug, sprintf(__('Applied %d file updates to staging area', 'wp-seamless-update'), $files_applied_count), 85);
 
     // --- 第 5 步：（可选）验证 ---
-    // 如果需要，在这里添加检查（例如，检查 style.css 是否存在）
+    // 如果需要，在这里添加检查（例如，检查 style.css 是否存在于 $staging_dir）
 
-    // --- 第 6 步：原子切换（删除实时，将临时移动到实时）---
+    // --- 第 6 步：原子切换（删除实时，将暂存移动到实时）---
+    wpsu_set_update_progress($target_theme_slug, __('Step 6: Activating the new version...', 'wp-seamless-update'), 90);
     error_log("WP Seamless Update Cron: 第 6 步 - 执行切换: 删除 $theme_root 并将 $staging_dir 移动到 $theme_root");
     $switch_ok = true;
 
@@ -466,10 +480,10 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
         }
     }
 
-    // 将临时目录移动到原始主题目录位置
+    // 将暂存目录移动到原始主题目录位置
     if ( $switch_ok ) {
         if ( ! $wp_filesystem->move( $staging_dir, $theme_root, true ) ) {
-            error_log("WP Seamless Update Cron: 在切换过程中无法将临时目录 $staging_dir 移动到 $theme_root。严重错误。尝试回滚。");
+            error_log("WP Seamless Update Cron: 在切换过程中无法将暂存目录 $staging_dir 移动到 $theme_root。严重错误。尝试回滚。");
             $switch_ok = false;
         }
     }
@@ -482,8 +496,10 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
         return;
     }
     error_log("WP Seamless Update Cron: 第 6 步 - 切换成功。");
+    wpsu_set_update_progress($target_theme_slug, __('New version activated', 'wp-seamless-update'), 95);
 
     // --- 第 7 步：完成 ---
+    wpsu_set_update_progress($target_theme_slug, __('Step 7: Finalizing update...', 'wp-seamless-update'), 98);
     error_log("WP Seamless Update Cron: 第 7 步 - 最终更新。");
 
     // 清除此主题的更新 transient 标记
@@ -494,12 +510,20 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
         wpsu_manage_backups( $target_theme_slug, $backup_dir_base, $backups_to_keep );
     }
 
-    // 清理临时下载目录（临时目录已移动或删除）
-    error_log("WP Seamless Update Cron: 清理临时下载目录 $temp_dir。");
-    $wp_filesystem->delete( $temp_dir, true );
+    // 清理临时下载和解压目录
+    error_log("WP Seamless Update Cron: 清理临时工作目录 $temp_dir。");
+    $wp_filesystem->delete( $temp_dir, true ); // 这会删除包和解压目录
+
+    // 清理可能残留的暂存目录（如果切换成功，它已经被移动了，但以防万一）
+    if ($wp_filesystem->exists($staging_dir)) {
+        error_log("WP Seamless Update Cron: 清理残留的暂存目录 $staging_dir。");
+        $wp_filesystem->delete( $staging_dir, true );
+    }
 
     update_option( 'wpsu_last_check_status_' . $target_theme_slug, sprintf( __( 'Update successful. Remote Internal Version: %s (Local INT_VERSION should reflect this after update).', 'wp-seamless-update' ), $remote_info->internal_version ) );
-    error_log( "WP Seamless Update Cron: 更新成功，主题 {$target_theme_slug}。已应用更新，远程内部版本: {$remote_info->internal_version}。如果更新包含 functions.php， 本地 INT_VERSION 常量现在应匹配。" );
+    wpsu_set_update_progress($target_theme_slug, sprintf(__('Update successful to internal version %s', 'wp-seamless-update'), $remote_info->internal_version), 100);
+    error_log( "WP Seamless Update Cron: ====== 更新成功完成，主题 {$target_theme_slug}。已应用更新，远程内部版本: {$remote_info->internal_version}。如果更新包含 functions.php， 本地 INT_VERSION 常量现在应匹配。 ======" );
+
 } catch (Exception $e) {
         // 捕获并记录异常
         $error_message = $e->getMessage();
@@ -514,6 +538,14 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
             100,
             true
         );
+        // 尝试清理
+        if (isset($wp_filesystem) && $wp_filesystem) {
+            if (isset($temp_dir) && $wp_filesystem->exists($temp_dir)) $wp_filesystem->delete($temp_dir, true);
+            if (isset($staging_dir) && $wp_filesystem->exists($staging_dir)) $wp_filesystem->delete($staging_dir, true);
+            // 保留备份目录以供检查
+        }
+        wpsu_clear_update_transient($target_theme_slug);
+
     } catch (Error $e) {
         // PHP 7+ 还支持捕获致命错误
         $error_message = $e->getMessage();
@@ -528,17 +560,24 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
             100,
             true
         );
+        // 尝试清理
+        if (isset($wp_filesystem) && $wp_filesystem) {
+            if (isset($temp_dir) && $wp_filesystem->exists($temp_dir)) $wp_filesystem->delete($temp_dir, true);
+            if (isset($staging_dir) && $wp_filesystem->exists($staging_dir)) $wp_filesystem->delete($staging_dir, true);
+            // 保留备份目录以供检查
+        }
+        wpsu_clear_update_transient($target_theme_slug);
     }
 }
 
 /**
- * 从备份回滚主题更新。清理临时和临时目录。
+ * 从备份回滚主题更新。清理临时和暂存目录。
  *
  * @param string $theme_slug 主题 slug。
  * @param string|null $backup_dir 备份目录的路径（如果禁用备份，则为 null）。
  * @param string $theme_root 主题目录路径（应该在哪里）。
- * @param string $staging_dir 更新期间使用的临时目录的路径。
- * @param string $temp_dir 临时下载目录的路径。
+ * @param string $staging_dir 更新期间使用的暂存目录的路径。
+ * @param string $temp_dir 临时工作目录的路径 (包含包和解压内容)。
  */
 function wpsu_rollback_update( $theme_slug, $backup_dir, $theme_root, $staging_dir, $temp_dir ) {
     global $wp_filesystem;
@@ -554,13 +593,13 @@ function wpsu_rollback_update( $theme_slug, $backup_dir, $theme_root, $staging_d
          return;
     }
 
-    // 首先清理临时目录和临时目录
+    // 首先清理暂存目录和临时工作目录
     if ( $wp_filesystem->exists( $staging_dir ) ) {
-        error_log("WP Seamless Update Rollback: 删除临时目录 $staging_dir。");
+        error_log("WP Seamless Update Rollback: 删除暂存目录 $staging_dir。");
         $wp_filesystem->delete( $staging_dir, true );
     }
     if ( $wp_filesystem->exists( $temp_dir ) ) {
-        error_log("WP Seamless Update Rollback: 删除临时目录 $temp_dir。");
+        error_log("WP Seamless Update Rollback: 删除临时工作目录 $temp_dir。");
         $wp_filesystem->delete( $temp_dir, true );
     }
 
@@ -648,7 +687,9 @@ function wpsu_set_update_progress($target_theme_slug, $message, $percent = -1, $
         if ($is_error) {
             update_option('wpsu_last_check_status_' . $target_theme_slug, sprintf(__('Update failed: %s', 'wp-seamless-update'), $message), false);
         } else {
-            update_option('wpsu_last_check_status_' . $target_theme_slug, __('Update successful. ', 'wp-seamless-update') . $message, false);
+            // 确保成功消息不包含 "Update in progress"
+            $success_message = str_replace(__('Update in progress: ', 'wp-seamless-update'), '', $message);
+            update_option('wpsu_last_check_status_' . $target_theme_slug, __('Update successful. ', 'wp-seamless-update') . $success_message, false);
         }
     } else {
         update_option('wpsu_last_check_status_' . $target_theme_slug, __('Update in progress: ', 'wp-seamless-update') . $message, false);
@@ -679,13 +720,13 @@ function wpsu_get_update_progress($target_theme_slug) {
     
     // 记录获取的进度信息
     if ($progress['percent'] >= 0) {
-        error_log("WP Seamless Update: 获取进度信息 - 主题: $target_theme_slug, 消息: {$progress['message']}, 进度: {$progress['percent']}%, 时间: " . ($progress['time'] ? date('Y-m-d H:i:s', $progress['time']) : 'N/A'));
+        // error_log("WP Seamless Update: 获取进度信息 - 主题: $target_theme_slug, 消息: {$progress['message']}, 进度: {$progress['percent']}%, 时间: " . ($progress['time'] ? date('Y-m-d H:i:s', $progress['time']) : 'N/A'));
     }
     
     // 减少超时检测时间到2分钟，更快地发现问题
     if ($progress['time'] > 0 && (time() - $progress['time'] > 120)) {
         // 检测到更新过程已经超过2分钟没有更新进度
-        if ($progress['percent'] >= 0 && $progress['percent'] < 100) {
+        if ($progress['percent'] >= 0 && $progress['percent'] < 100 && !$progress['is_error']) { // 仅在未完成且非错误状态下标记为超时
             $last_step = $progress['message'];
             error_log("WP Seamless Update: 检测到更新过程可能超时或卡住，最后进度: {$progress['percent']}%, 最后消息: $last_step");
             
@@ -714,3 +755,14 @@ function wpsu_get_update_progress($target_theme_slug) {
 function wpsu_clear_update_progress($target_theme_slug) {
     delete_option('wpsu_update_progress_' . $target_theme_slug);
 }
+
+// --- 函数 wpsu_cleanup_temp_dirs 已移至 helpers.php ---
+// [REMOVED DUPLICATE FUNCTION DEFINITION for wpsu_cleanup_temp_dirs]
+
+// --- 函数 wpsu_manage_backups 已移至 helpers.php ---
+// [REMOVED DUPLICATE FUNCTION DEFINITION for wpsu_manage_backups]
+
+// --- 函数 wpsu_flatten_dirlist 已移至 helpers.php ---
+// [REMOVED DUPLICATE FUNCTION DEFINITION for wpsu_flatten_dirlist]
+
+?>
