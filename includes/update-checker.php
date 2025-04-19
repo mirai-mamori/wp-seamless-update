@@ -95,11 +95,10 @@ function wpsu_check_for_theme_update( $transient ) {
     // 2. 如果显示版本匹配，检查内部版本
     if ( version_compare( $remote_info->display_version, $current_display_version, '==' ) ) {
         // 使用 $current_internal_version_for_compare 进行比较
-        if ( version_compare( $remote_info->internal_version, $current_internal_version_for_compare, '>' ) ) {
-            // 内部版本较新，触发无缝更新过程。
+        if ( version_compare( $remote_info->internal_version, $current_internal_version_for_compare, '>' ) ) {            // 内部版本较新，触发无缝更新过程。
             update_option( $status_option_key, sprintf( __( 'Internal update needed (Remote Internal: %s > Local INT_VERSION: %s). Scheduling update.', 'wp-seamless-update' ), $remote_info->internal_version, $current_internal_version ) );            // 如果尚未安排，安排 cron 作业
             if ( ! wp_next_scheduled( 'wpsu_perform_seamless_update_hook', array( $target_theme_slug ) ) ) {
-                $scheduled = wp_schedule_single_event( time() + 5, 'wpsu_perform_seamless_update_hook', array( $target_theme_slug ) );
+                $scheduled = wp_schedule_single_event( time() + 60, 'wpsu_perform_seamless_update_hook', array( $target_theme_slug ) );
                 if ($scheduled) {
                     error_log( sprintf( 'WP Seamless Update: Successfully scheduled cron job for theme %s internal update to version %s.', $target_theme_slug, $remote_info->internal_version ) );
                 } else {
