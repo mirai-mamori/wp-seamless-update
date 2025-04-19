@@ -167,7 +167,7 @@ function wpsu_target_theme_render() {
     $selected_theme = isset( $options['target_theme'] ) ? $options['target_theme'] : '';
     $themes = wp_get_themes();
     ?>
-    <select name="<?php echo esc_attr( WPSU_OPTION_NAME ); ?>[target_theme]">
+    <select name="<?php echo esc_attr( WPSU_OPTION_NAME ); ?>[target_theme]" id="wpsu-target-theme">
         <option value=""><?php esc_html_e( '-- Select a Theme --', 'wp-seamless-update' ); ?></option>
         <?php foreach ( $themes as $theme_slug => $theme ) : ?>
             <option value="<?php echo esc_attr( $theme_slug ); ?>" <?php selected( $selected_theme, $theme_slug ); ?>>
@@ -176,6 +176,68 @@ function wpsu_target_theme_render() {
         <?php endforeach; ?>
     </select>
     <p class="description"><?php esc_html_e( 'Select the theme to apply seamless updates to.', 'wp-seamless-update' ); ?></p>
+    
+    <script>
+        // 在页面加载完成后运行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取目标主题下拉框
+            var themeSelect = document.getElementById('wpsu-target-theme');
+            
+            // 只有当元素存在时才添加事件监听器
+            if(themeSelect) {
+                themeSelect.addEventListener('change', function() {
+                    var selectedTheme = this.value;
+                    if(selectedTheme) {
+                        detectSSU_URL(selectedTheme);
+                    }
+                });
+                
+                // 如果有预选的值，也执行检测（页面加载时）
+                if(themeSelect.value) {
+                    detectSSU_URL(themeSelect.value);
+                }
+            }
+            
+            // 检测主题中的SSU_URL常量并填充URL字段
+            function detectSSU_URL(themeSlug) {
+                // 创建一个新的XMLHttpRequest请求
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', ajaxurl, true);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+                
+                // 处理响应
+                xhr.onload = function() {
+                    if (xhr.status >= 200 && xhr.status < 400) {                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            if(response.success && response.data && response.data.ssu_url) {
+                                // 找到URL字段并设置值
+                                var urlField = document.querySelector('input[name="<?php echo esc_attr( WPSU_OPTION_NAME ); ?>[update_url]"]');                                // 检查当前字段值
+                                if(urlField) {
+                                    var currentUrl = urlField.value;
+                                    var ssuUrl = response.data.ssu_url;
+                                    // 只有当URL字段为空时才自动填入，不再提示
+                                    if(!currentUrl) {
+                                        urlField.value = ssuUrl;
+                                    }
+                                    // 不再弹出确认对话框
+                                }
+                            }
+                        } catch(e) {
+                            console.error('解析响应时出错:', e);
+                        }
+                    }
+                };
+                
+                // 处理错误
+                xhr.onerror = function() {
+                    console.error('请求失败');
+                };
+                
+                // 发送请求
+                xhr.send('action=wpsu_detect_ssu_url&theme_slug=' + encodeURIComponent(themeSlug) + '&_ajax_nonce=<?php echo wp_create_nonce("wpsu_detect_ssu_url_nonce"); ?>');
+            }
+        });
+    </script>
     <?php
 }
 

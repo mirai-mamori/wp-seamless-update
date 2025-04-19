@@ -379,3 +379,87 @@ function wpsu_ajax_get_update_progress() {
     }
 }
 add_action('wp_ajax_wpsu_get_update_progress', 'wpsu_ajax_get_update_progress');
+
+/**
+ * AJAX处理程序，用于检测主题中的SSU_URL常量
+ */
+function wpsu_ajax_detect_ssu_url() {
+    error_reporting(0); // 抑制PHP错误/警告
+    
+    // 检查权限
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(array('message' => __('Permission denied.', 'wp-seamless-update')));
+        return;
+    }
+    
+    // 验证nonce
+    check_ajax_referer('wpsu_detect_ssu_url_nonce', '_ajax_nonce');
+    
+    // 获取主题slug
+    $theme_slug = isset($_POST['theme_slug']) ? sanitize_text_field($_POST['theme_slug']) : '';
+    if (!$theme_slug) {
+        wp_send_json_error(array('message' => __('No theme slug provided.', 'wp-seamless-update')));
+        return;
+    }
+    
+    // 获取主题对象
+    $theme = wp_get_theme($theme_slug);
+    if (!$theme->exists()) {
+        wp_send_json_error(array('message' => __('Theme does not exist.', 'wp-seamless-update')));
+        return;
+    }
+    
+    // 检查主题是否激活
+    $active_theme = wp_get_theme();
+    $is_active = ($active_theme->get_stylesheet() === $theme_slug);
+    
+    // 如果主题处于活动状态，检查是否定义了SSU_URL常量
+    $ssu_url = null;
+    
+    if ($is_active && defined('SSU_URL')) {
+        $ssu_url = SSU_URL;
+    } else {
+        // 如果主题不是活动主题，我们需要临时加载主题的functions.php来检查是否定义了SSU_URL
+        // 但这可能导致冲突或错误，因此我们在一个临时的隔离环境中执行此操作
+        $functions_file = $theme->get_stylesheet_directory() . '/functions.php';
+        
+        if (file_exists($functions_file)) {
+            // 使用输出缓冲以防止任何输出
+            ob_start();
+            
+            // 定义一个临时函数来检查SSU_URL常量
+            function wpsu_check_ssu_url_defined() {
+                return defined('SSU_URL') ? SSU_URL : null;
+            }
+            
+            // 使用包含方式加载functions.php，但可能会有风险
+            // 尝试在隔离环境中包含文件
+            try {
+                // 加载一次functions.php，如果文件中定义了SSU_URL常量，它就会被定义在全局作用域中
+                include_once($functions_file);
+                
+                // 检查SSU_URL是否被定义
+                $ssu_url = wpsu_check_ssu_url_defined();
+            } catch (Exception $e) {
+                // 如果有任何错误，忽略它
+                error_log('WP Seamless Update: Error checking SSU_URL in theme: ' . $e->getMessage());
+            }
+            
+            // 清除缓冲区
+            ob_end_clean();
+        }
+    }
+    
+    // 返回结果
+    if ($ssu_url) {
+        wp_send_json_success(array(
+            'ssu_url' => $ssu_url,
+            'message' => __('SSU_URL constant found in theme.', 'wp-seamless-update')
+        ));
+    } else {
+        wp_send_json_error(array(
+            'message' => __('SSU_URL constant not found in theme.', 'wp-seamless-update')
+        ));
+    }
+}
+add_action('wp_ajax_wpsu_detect_ssu_url', 'wpsu_ajax_detect_ssu_url');
