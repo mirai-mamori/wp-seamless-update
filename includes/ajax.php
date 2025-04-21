@@ -6,7 +6,7 @@
  */
 
 // If this file is called directly, abort.
-if ( ! defined( 'WPINC' ) ) {
+if ( ! defined( 'ABSPATH' ) ) { // 使用 ABSPATH 进行更严格的检查
     die;
 }
 
@@ -22,8 +22,9 @@ function wpsu_ajax_manual_check() {
     }
 
     $options = get_option( WPSU_OPTION_NAME, array() );
-    $target_theme_slug = isset( $options['target_theme'] ) ? $options['target_theme'] : null;
-    $update_url = isset( $options['update_url'] ) ? $options['update_url'] : null;
+    // 对从选项获取的数据进行清理
+    $target_theme_slug = isset( $options['target_theme'] ) ? sanitize_key( $options['target_theme'] ) : null;
+    $update_url = isset( $options['update_url'] ) ? esc_url_raw( $options['update_url'] ) : null;
 
     if ( ! $target_theme_slug || ! $update_url ) {
         wp_send_json_error( array( 'message' => __( 'Plugin not configured (Target Theme or Update URL missing).', 'wp-seamless-update' ) ) );
@@ -35,11 +36,13 @@ function wpsu_ajax_manual_check() {
 
     // 提供一个通用的成功消息，实际状态将在 WP 检查运行后更新。
     $status_message = __( 'Update check triggered. Status will refresh on the next automatic check or page load.', 'wp-seamless-update' );
+    // 确保从选项获取的状态在输出前是安全的（尽管 get_option 通常是安全的）
     $last_status = get_option( 'wpsu_last_check_status_' . $target_theme_slug, __('N/A', 'wp-seamless-update') );
+    // 如果 $last_status 可能包含 HTML 或脚本，则需要进一步清理，但这里假设它只是文本状态。
 
     wp_send_json_success( array(
         'message' => $status_message,
-        'status' => $last_status // 发回最后已知的状态
+        'status' => esc_html( $last_status ) // 对输出进行转义以提高安全性
     ) );
 }
 add_action( 'wp_ajax_wpsu_manual_check', 'wpsu_ajax_manual_check' );
