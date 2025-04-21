@@ -10,6 +10,8 @@
  * License URI:       http://www.gnu.org/licenses/gpl-3.0.txt
  * Text Domain:       wp-seamless-update
  * Domain Path:       /languages
+ *
+ * 安全提示：本插件仅限管理员后台使用，所有操作均需权限校验。请勿赋予低权限用户插件相关操作能力。
  */
 
 // If this file is called directly, abort.
@@ -18,18 +20,31 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 // 加载常量定义
-require_once plugin_dir_path( __FILE__ ) . 'includes/constants.php';
+$const_file = plugin_dir_path( __FILE__ ) . 'includes/constants.php';
+if (file_exists($const_file)) require_once $const_file;
 
 // 加载基础类
-require_once plugin_dir_path( __FILE__ ) . 'includes/class-wpsu-base.php';
+$base_file = plugin_dir_path( __FILE__ ) . 'includes/class-wpsu-base.php';
+if (file_exists($base_file)) require_once $base_file;
 
 // 加载模块
-require_once plugin_dir_path( __FILE__ ) . 'includes/helpers.php';
-require_once plugin_dir_path( __FILE__ ) . 'includes/update-checker.php';
-require_once plugin_dir_path( __FILE__ ) . 'includes/update-processor.php';
-require_once plugin_dir_path( __FILE__ ) . 'includes/ajax.php';
-require_once plugin_dir_path( __FILE__ ) . 'includes/admin.php';
-require_once plugin_dir_path( __FILE__ ) . 'includes/hooks.php';
+$helpers_file = plugin_dir_path( __FILE__ ) . 'includes/helpers.php';
+if (file_exists($helpers_file)) require_once $helpers_file;
+
+$checker_file = plugin_dir_path( __FILE__ ) . 'includes/update-checker.php';
+if (file_exists($checker_file)) require_once $checker_file;
+
+$processor_file = plugin_dir_path( __FILE__ ) . 'includes/update-processor.php';
+if (file_exists($processor_file)) require_once $processor_file;
+
+$ajax_file = plugin_dir_path( __FILE__ ) . 'includes/ajax.php';
+if (file_exists($ajax_file)) require_once $ajax_file;
+
+$admin_file = plugin_dir_path( __FILE__ ) . 'includes/admin.php';
+if (file_exists($admin_file)) require_once $admin_file;
+
+$hooks_file = plugin_dir_path( __FILE__ ) . 'includes/hooks.php';
+if (file_exists($hooks_file)) require_once $hooks_file;
 
 // 注册激活、停用钩子
 register_activation_hook( __FILE__, 'wpsu_activate' );
