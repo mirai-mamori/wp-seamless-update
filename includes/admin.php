@@ -38,9 +38,9 @@ function wpsu_settings_init() {
     );
 
     add_settings_field(
-        'wpsu_target_theme',
-        __( 'Target Theme', 'wp-seamless-update' ),
-        'wpsu_target_theme_render',
+        'wpsu_active_theme_info',
+        __( 'Active Theme', 'wp-seamless-update' ),
+        'wpsu_active_theme_info_render',
         WPSU_PLUGIN_SLUG,
         'wpsu_settings_section'
     );
@@ -106,23 +106,33 @@ function wpsu_sanitize_settings( $input ) {
     $sanitized_input = array();
     $options = get_option( WPSU_OPTION_NAME, array() ); // 确保选项是一个数组
 
-    // 目标主题
-    if ( isset( $input['target_theme'] ) ) {
-        $theme_slug = sanitize_text_field( $input['target_theme'] );
-        if ( empty($theme_slug) ) {
-             $sanitized_input['target_theme'] = ''; // 允许取消设置
-        } else {
-            $theme = wp_get_theme( $theme_slug );
-            if ( $theme->exists() ) {
-                $sanitized_input['target_theme'] = $theme_slug;
-            } else {
-                 $sanitized_input['target_theme'] = isset( $options['target_theme'] ) ? $options['target_theme'] : '';
-                 add_settings_error(WPSU_OPTION_NAME, 'invalid_theme', __('Selected theme does not exist.', 'wp-seamless-update'), 'error');
-            }
+    // 目标主题 - 自动使用当前激活的主题
+    $active_theme = wp_get_theme();
+    $active_theme_slug = $active_theme->get_stylesheet();
+    
+    // 始终自动使用当前激活的主题，无论表单提交内容如何
+    // 检查主题是否存在
+    if ($active_theme->exists()) {
+        // 强制设置为当前激活的主题，确保保存时生效
+        $sanitized_input['target_theme'] = $active_theme_slug;
+        
+        // 检查是否支持 INT_VERSION
+        if (!defined('INT_VERSION')) {
+            add_settings_error(
+                WPSU_OPTION_NAME, 
+                'theme_no_int_version', 
+                __('Warning: The active theme does not define INT_VERSION constant which is required for seamless updates.', 'wp-seamless-update'),
+                'warning'
+            );
         }
     } else {
-        // 如果复选框未选中或字段不存在，保留旧值或默认为空
-        $sanitized_input['target_theme'] = isset( $options['target_theme'] ) ? $options['target_theme'] : '';
+        $sanitized_input['target_theme'] = '';
+        add_settings_error(
+            WPSU_OPTION_NAME, 
+            'no_active_theme', 
+            __('No active theme detected. Please activate a theme that supports seamless updates.', 'wp-seamless-update'),
+            'error'
+        );
     }
 
     // 更新 URL
@@ -155,48 +165,52 @@ function wpsu_sanitize_settings( $input ) {
  * 设置部分回调函数。
  */
 function wpsu_settings_section_callback() {
-    echo '<p>' . esc_html__( 'Select the theme you want to manage with seamless updates and provide the URL for the update server.', 'wp-seamless-update' ) . '</p>';
+    echo '<p>' . esc_html__( 'The plugin will automatically use your currently active theme for seamless updates. Please provide the URL for the update server.', 'wp-seamless-update' ) . '</p>';
     echo '<p>' . esc_html__( 'The update server URL should point to an endpoint providing a JSON file (e.g., version.json) with `display_version`, `internal_version`, and a `files` manifest (path, hash, url).', 'wp-seamless-update' ) . '</p>';
 }
 
 /**
- * 渲染目标主题下拉字段。
+ * 渲染当前激活主题信息，并自动更新设置。
  */
-function wpsu_target_theme_render() {
-    $options = get_option( WPSU_OPTION_NAME, array() );
-    $selected_theme = isset( $options['target_theme'] ) ? $options['target_theme'] : '';
-    $themes = wp_get_themes();
+function wpsu_active_theme_info_render() {
+    // 获取当前激活的主题
+    $active_theme = wp_get_theme();
+    $active_theme_slug = $active_theme->get_stylesheet();
+    
+    // 自动更新选项中的目标主题为当前激活的主题，实现自动保存
+    $options = get_option(WPSU_OPTION_NAME, array());
+    if (empty($options['target_theme']) || $options['target_theme'] !== $active_theme_slug) {
+        $options['target_theme'] = $active_theme_slug;
+        update_option(WPSU_OPTION_NAME, $options);
+    }
+    
+    // 显示主题信息
     ?>
-    <select name="<?php echo esc_attr( WPSU_OPTION_NAME ); ?>[target_theme]" id="wpsu-target-theme">
-        <option value=""><?php esc_html_e( '-- Select a Theme --', 'wp-seamless-update' ); ?></option>
-        <?php foreach ( $themes as $theme_slug => $theme ) : ?>
-            <option value="<?php echo esc_attr( $theme_slug ); ?>" <?php selected( $selected_theme, $theme_slug ); ?>>
-                <?php echo esc_html( $theme->get( 'Name' ) ); ?> (<?php echo esc_html($theme_slug); ?>)
-            </option>
-        <?php endforeach; ?>
-    </select>
-    <p class="description"><?php esc_html_e( 'Select the theme to apply seamless updates to.', 'wp-seamless-update' ); ?></p>
+    <div class="wpsu-active-theme-info">
+        <div><strong><?php echo esc_html($active_theme->get('Name')); ?></strong> (<?php echo esc_html($active_theme_slug); ?>)</div>
+        <div class="description"><?php printf(esc_html__('Version: %s', 'wp-seamless-update'), esc_html($active_theme->get('Version'))); ?></div>
+        
+        <?php 
+        // 检查主题是否支持 INT_VERSION 常量
+        $supports_int_version = defined('INT_VERSION');
+        if ($supports_int_version) {
+            echo '<div class="wpsu-supports-int-version"><span class="dashicons dashicons-yes-alt"></span> ' . 
+                 sprintf(esc_html__('Supports seamless updates (INT_VERSION: %s)', 'wp-seamless-update'), esc_html(INT_VERSION)) . 
+                 '</div>';
+        } else {
+            echo '<div class="wpsu-warning"><span class="dashicons dashicons-warning"></span> ' . 
+                 esc_html__('Theme does not support seamless updates. INT_VERSION constant not found.', 'wp-seamless-update') . 
+                 '</div>';
+        }
+        ?>
+    </div>
+    <p class="description"><?php esc_html_e('The plugin will automatically use your currently active theme for seamless updates.', 'wp-seamless-update'); ?></p>
     
     <script>
         // 在页面加载完成后运行
         document.addEventListener('DOMContentLoaded', function() {
-            // 获取目标主题下拉框
-            var themeSelect = document.getElementById('wpsu-target-theme');
-            
-            // 只有当元素存在时才添加事件监听器
-            if(themeSelect) {
-                themeSelect.addEventListener('change', function() {
-                    var selectedTheme = this.value;
-                    if(selectedTheme) {
-                        detectSSU_URL(selectedTheme);
-                    }
-                });
-                
-                // 如果有预选的值，也执行检测（页面加载时）
-                if(themeSelect.value) {
-                    detectSSU_URL(themeSelect.value);
-                }
-            }
+            // 自动检测当前激活主题的 SSU_URL
+            detectSSU_URL('<?php echo esc_js($active_theme_slug); ?>');
             
             // 检测主题中的SSU_URL常量并填充URL字段
             function detectSSU_URL(themeSlug) {
@@ -210,16 +224,18 @@ function wpsu_target_theme_render() {
                     if (xhr.status >= 200 && xhr.status < 400) {                        try {
                             var response = JSON.parse(xhr.responseText);
                             if(response.success && response.data && response.data.ssu_url) {
-                                // 找到URL字段并设置值
-                                var urlField = document.querySelector('input[name="<?php echo esc_attr( WPSU_OPTION_NAME ); ?>[update_url]"]');                                // 检查当前字段值
+                                // 找到URL字段并设置值 - 现在查找自动保存的URL输入框
+                                var urlField = document.getElementById('wpsu-update-url');
                                 if(urlField) {
                                     var currentUrl = urlField.value;
                                     var ssuUrl = response.data.ssu_url;
                                     // 只有当URL字段为空时才自动填入，不再提示
                                     if(!currentUrl) {
                                         urlField.value = ssuUrl;
+                                        // 触发输入事件，确保自动保存功能被激活
+                                        var inputEvent = new Event('input', { bubbles: true });
+                                        urlField.dispatchEvent(inputEvent);
                                     }
-                                    // 不再弹出确认对话框
                                 }
                             }
                         } catch(e) {
@@ -242,7 +258,7 @@ function wpsu_target_theme_render() {
 }
 
 /**
- * 渲染更新源 URL 文本字段。
+ * 渲染更新源 URL 文本字段（仅用于显示，已废弃）
  */
 function wpsu_update_url_render() {
     $options = get_option( WPSU_OPTION_NAME, array() );
@@ -254,7 +270,90 @@ function wpsu_update_url_render() {
 }
 
 /**
- * 渲染要保留的备份数字段。
+ * 渲染自动保存的更新源 URL 文本字段
+ */
+function wpsu_update_url_render_autosave() {
+    $options = get_option( WPSU_OPTION_NAME, array() );
+    $update_url = isset( $options['update_url'] ) ? $options['update_url'] : '';
+    ?>
+    <input type='url' id="wpsu-update-url" value="<?php echo esc_url( $update_url ); ?>" class="regular-text" placeholder="https://example.com/updates/theme-info.json">
+    <p class="description"><?php esc_html_e( 'URL pointing to the JSON file containing update information. Changes are automatically saved.', 'wp-seamless-update' ); ?></p>
+    <div id="wpsu-update-url-status" class="wpsu-autosave-status"></div>
+    <script>
+        jQuery(document).ready(function($) {
+            // 为URL字段添加自动保存功能
+            var updateUrlTimer;
+            $('#wpsu-update-url').on('input', function() {
+                clearTimeout(updateUrlTimer);
+                var $status = $('#wpsu-update-url-status');
+                $status.text('<?php esc_html_e("Typing...", "wp-seamless-update"); ?>').removeClass('success error');
+                
+                updateUrlTimer = setTimeout(function() {
+                    var url = $('#wpsu-update-url').val();
+                    $status.text('<?php esc_html_e("Saving...", "wp-seamless-update"); ?>');
+                      $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'wpsu_autosave_setting',
+                            _ajax_nonce: '<?php echo wp_create_nonce("wpsu_autosave_nonce"); ?>',
+                            setting_name: 'update_url',
+                            setting_value: url
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                $status.text('<?php esc_html_e("Saved", "wp-seamless-update"); ?>').addClass('success');
+                                
+                                // 设置一个变量来跟踪用户是否还在输入
+                                var userStillTyping = false;
+                                
+                                // 创建一个更长的等待时间，之后自动刷新页面
+                                var refreshTimeout = setTimeout(function() {
+                                    if (!userStillTyping) {
+                                        $status.text('<?php esc_html_e("Settings saved, refreshing...", "wp-seamless-update"); ?>');
+                                        // 短暂延迟后刷新页面，以便用户看到提示
+                                        setTimeout(function() {
+                                            window.location.reload();
+                                        }, 500);
+                                    }
+                                }, 3000); // 3秒后如果用户没有继续输入，则刷新页面
+                                
+                                // 监听输入框，如果用户继续输入，则取消刷新
+                                $('#wpsu-update-url').on('input', function() {
+                                    userStillTyping = true;
+                                    clearTimeout(refreshTimeout); // 取消自动刷新
+                                }).one('blur', function() {
+                                    // 当用户移出输入框时，如果保存成功且已经稳定，则刷新页面
+                                    setTimeout(function() {
+                                        if ($status.hasClass('success')) {
+                                            $status.text('<?php esc_html_e("Settings saved, refreshing...", "wp-seamless-update"); ?>');
+                                            setTimeout(function() {
+                                                window.location.reload();
+                                            }, 500);
+                                        }
+                                    }, 1000);
+                                });
+                                
+                                setTimeout(function() {
+                                    $status.text('').removeClass('success');
+                                }, 2000);
+                            } else {
+                                $status.text(response.data.message).addClass('error');
+                            }
+                        },
+                        error: function() {
+                            $status.text('<?php esc_html_e("Error saving", "wp-seamless-update"); ?>').addClass('error');
+                        }
+                    });
+                }, 1000);
+            });
+        });
+    </script>
+    <?php
+}
+
+/**
+ * 渲染要保留的备份数字段（仅用于显示，已废弃）
  */
 function wpsu_backups_to_keep_render() {
     $options = get_option( WPSU_OPTION_NAME, array() );
@@ -262,6 +361,59 @@ function wpsu_backups_to_keep_render() {
     ?>
     <input type='number' name="<?php echo esc_attr( WPSU_OPTION_NAME ); ?>[backups_to_keep]" value="<?php echo esc_attr( $backups_to_keep ); ?>" min="0" step="1" class="small-text">
     <p class="description"><?php esc_html_e( 'Number of backups to retain. Set to 0 to disable backups (not recommended).', 'wp-seamless-update' ); ?></p>
+    <?php
+}
+
+/**
+ * 渲染自动保存的备份数量字段
+ */
+function wpsu_backups_to_keep_render_autosave() {
+    $options = get_option( WPSU_OPTION_NAME, array() );
+    $backups_to_keep = isset( $options['backups_to_keep'] ) ? absint($options['backups_to_keep']) : WPSU_DEFAULT_BACKUPS_TO_KEEP;
+    ?>
+    <input type='number' id="wpsu-backups-to-keep" value="<?php echo esc_attr( $backups_to_keep ); ?>" min="0" step="1" class="small-text">
+    <p class="description"><?php esc_html_e( 'Number of backups to retain. Set to 0 to disable backups (not recommended). Changes are automatically saved.', 'wp-seamless-update' ); ?></p>
+    <div id="wpsu-backups-status" class="wpsu-autosave-status"></div>
+    <script>
+        jQuery(document).ready(function($) {
+            // 为备份数量字段添加自动保存功能
+            var backupsTimer;
+            $('#wpsu-backups-to-keep').on('input', function() {
+                clearTimeout(backupsTimer);
+                var $status = $('#wpsu-backups-status');
+                $status.text('<?php esc_html_e("Typing...", "wp-seamless-update"); ?>').removeClass('success error');
+                
+                backupsTimer = setTimeout(function() {
+                    var backups = $('#wpsu-backups-to-keep').val();
+                    $status.text('<?php esc_html_e("Saving...", "wp-seamless-update"); ?>');
+                    
+                    $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'wpsu_autosave_setting',
+                            _ajax_nonce: '<?php echo wp_create_nonce("wpsu_autosave_nonce"); ?>',
+                            setting_name: 'backups_to_keep',
+                            setting_value: backups
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                $status.text('<?php esc_html_e("Saved", "wp-seamless-update"); ?>').addClass('success');
+                                setTimeout(function() {
+                                    $status.text('').removeClass('success');
+                                }, 2000);
+                            } else {
+                                $status.text(response.data.message).addClass('error');
+                            }
+                        },
+                        error: function() {
+                            $status.text('<?php esc_html_e("Error saving", "wp-seamless-update"); ?>').addClass('error');
+                        }
+                    });
+                }, 1000);
+            });
+        });
+    </script>
     <?php
 }
 
@@ -508,38 +660,43 @@ function wpsu_options_page_html() {
         
         <div class="wpsu-admin-content">
             <!-- 左侧设置区域 -->
-            <div class="wpsu-settings-container">
-                <form action="options.php" method="post">
-                    <div class="wpsu-card">
-                        <div class="wpsu-card-header">
-                            <h2><span class="dashicons dashicons-admin-generic"></span> <?php esc_html_e('Theme Update Configuration', 'wp-seamless-update'); ?></h2>
+            <div class="wpsu-settings-container">                <div class="wpsu-card">
+                    <div class="wpsu-card-header">
+                        <h2><span class="dashicons dashicons-admin-generic"></span> <?php esc_html_e('Theme Update Configuration', 'wp-seamless-update'); ?></h2>
+                    </div>
+                    <div class="wpsu-card-body">
+                        <?php 
+                        // 显示配置部分的说明文字
+                        global $wp_settings_sections;
+                        $page = WPSU_PLUGIN_SLUG;
+                        
+                        if (isset($wp_settings_sections[$page]) && isset($wp_settings_sections[$page]['wpsu_settings_section'])) {
+                            echo '<div class="wpsu-section-description">';
+                            call_user_func($wp_settings_sections[$page]['wpsu_settings_section']['callback']);
+                            echo '</div>';
+                        }
+                        ?>
+                        
+                        <!-- 显示主题信息 -->
+                        <div class="form-table">
+                            <div class="form-field">
+                                <h3><?php esc_html_e('Active Theme', 'wp-seamless-update'); ?></h3>
+                                <?php wpsu_active_theme_info_render(); ?>
+                            </div>
                         </div>
-                        <div class="wpsu-card-body">
-                            <?php 
-                            settings_fields( WPSU_OPTION_GROUP ); // Nonce, action, option_page 字段
-                            
-                            // 仅显示配置部分的字段
-                            global $wp_settings_sections, $wp_settings_fields;
-                            $page = WPSU_PLUGIN_SLUG;
-                            
-                            if (isset($wp_settings_sections[$page]) && isset($wp_settings_sections[$page]['wpsu_settings_section'])) {
-                                echo '<div class="wpsu-section-description">';
-                                call_user_func($wp_settings_sections[$page]['wpsu_settings_section']['callback']);
-                                echo '</div>';
-                                
-                                if (isset($wp_settings_fields[$page]['wpsu_settings_section'])) {
-                                    echo '<table class="form-table" role="presentation">';
-                                    do_settings_fields($page, 'wpsu_settings_section');
-                                    echo '</table>';
-                                }
-                            }
-                            ?>
-                        </div>
-                        <div class="wpsu-card-footer">
-                            <?php submit_button( __( 'Save Settings', 'wp-seamless-update' ), 'primary', 'submit', false ); ?>
+                          <!-- 自动保存选项的显示界面 -->
+                        <div class="form-table" role="presentation">
+                            <div class="form-field">
+                                <h3><?php esc_html_e('Update Source URL', 'wp-seamless-update'); ?></h3>
+                                <?php wpsu_update_url_render_autosave(); ?>
+                            </div>
+                            <div class="form-field">
+                                <h3><?php esc_html_e('Number of Backups to Keep', 'wp-seamless-update'); ?></h3>
+                                <?php wpsu_backups_to_keep_render_autosave(); ?>
+                            </div>
                         </div>
                     </div>
-                </form>
+                </div>
                 
                 <!-- 状态和操作区域 -->
                 <div class="wpsu-card wpsu-status-card">

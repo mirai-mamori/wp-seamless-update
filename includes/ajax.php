@@ -383,6 +383,71 @@ add_action('wp_ajax_wpsu_get_update_progress', 'wpsu_ajax_get_update_progress');
 /**
  * AJAX处理程序，用于检测主题中的SSU_URL常量
  */
+/**
+ * AJAX处理程序，用于自动保存设置
+ */
+function wpsu_ajax_autosave_setting() {
+    error_reporting(0); // 抑制PHP错误/警告
+    
+    // 检查权限
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(array('message' => __('Permission denied.', 'wp-seamless-update')));
+        return;
+    }
+    
+    // 验证nonce
+    check_ajax_referer('wpsu_autosave_nonce', '_ajax_nonce');
+    
+    // 获取要保存的设置名称和值
+    $setting_name = isset($_POST['setting_name']) ? sanitize_text_field($_POST['setting_name']) : '';
+    $setting_value = isset($_POST['setting_value']) ? $_POST['setting_value'] : '';
+    
+    if (!$setting_name) {
+        wp_send_json_error(array('message' => __('No setting name provided.', 'wp-seamless-update')));
+        return;
+    }
+    
+    // 获取当前选项
+    $options = get_option(WPSU_OPTION_NAME, array());
+    
+    // 根据设置类型进行验证和保存
+    switch ($setting_name) {
+        case 'update_url':
+            $url = esc_url_raw(trim($setting_value));
+            if (empty($url) || filter_var($url, FILTER_VALIDATE_URL)) {
+                $options['update_url'] = $url;
+            } else {
+                wp_send_json_error(array('message' => __('Invalid URL format.', 'wp-seamless-update')));
+                return;
+            }
+            break;
+            
+        case 'backups_to_keep':
+            $backups = absint($setting_value);
+            $options['backups_to_keep'] = $backups;
+            break;
+            
+        default:
+            wp_send_json_error(array('message' => __('Unknown setting.', 'wp-seamless-update')));
+            return;
+    }
+    
+    // 始终确保目标主题是当前激活的主题
+    $active_theme = wp_get_theme();
+    $options['target_theme'] = $active_theme->get_stylesheet();
+      // 保存更新后的选项
+    // update_option 只有在值真正改变时才返回 true，如果值相同则返回 false
+    // 但在这里我们视为成功
+    update_option(WPSU_OPTION_NAME, $options);
+    
+    // 总是返回成功，因为即使值没有改变也应该视为设置有效
+    wp_send_json_success(array(
+        'message' => __('Setting saved successfully.', 'wp-seamless-update'),
+        'options' => $options // 返回更新后的完整选项，以便前端知道当前值
+    ));
+}
+add_action('wp_ajax_wpsu_autosave_setting', 'wpsu_ajax_autosave_setting');
+
 function wpsu_ajax_detect_ssu_url() {
     error_reporting(0); // 抑制PHP错误/警告
     
@@ -395,10 +460,15 @@ function wpsu_ajax_detect_ssu_url() {
     // 验证nonce
     check_ajax_referer('wpsu_detect_ssu_url_nonce', '_ajax_nonce');
     
-    // 获取主题slug
+    // 获取主题slug - 可以从请求中获取，但如果没有则自动使用当前激活的主题
     $theme_slug = isset($_POST['theme_slug']) ? sanitize_text_field($_POST['theme_slug']) : '';
     if (!$theme_slug) {
-        wp_send_json_error(array('message' => __('No theme slug provided.', 'wp-seamless-update')));
+        $active_theme = wp_get_theme();
+        $theme_slug = $active_theme->get_stylesheet();
+    }
+    
+    if (!$theme_slug) {
+        wp_send_json_error(array('message' => __('No active theme detected.', 'wp-seamless-update')));
         return;
     }
     
@@ -413,51 +483,51 @@ function wpsu_ajax_detect_ssu_url() {
     $active_theme = wp_get_theme();
     $is_active = ($active_theme->get_stylesheet() === $theme_slug);
     
-    // 如果主题处于活动状态，检查是否定义了SSU_URL常量
+    // 如果主题处于活动状态，检查是否定义了INT_VERSION和SSU_URL常量
     $ssu_url = null;
+    $has_int_version = false;
     
-    if ($is_active && defined('SSU_URL')) {
-        $ssu_url = SSU_URL;
-    } else {
-        // 如果主题不是活动主题，我们需要临时加载主题的functions.php来检查是否定义了SSU_URL
-        // 但这可能导致冲突或错误，因此我们在一个临时的隔离环境中执行此操作
-        $functions_file = $theme->get_stylesheet_directory() . '/functions.php';
-        
-        if (file_exists($functions_file)) {
-            // 使用输出缓冲以防止任何输出
-            ob_start();
-            
-            // 定义一个临时函数来检查SSU_URL常量
-            function wpsu_check_ssu_url_defined() {
-                return defined('SSU_URL') ? SSU_URL : null;
-            }
-            
-            // 使用包含方式加载functions.php，但可能会有风险
-            // 尝试在隔离环境中包含文件
-            try {
-                // 加载一次functions.php，如果文件中定义了SSU_URL常量，它就会被定义在全局作用域中
-                include_once($functions_file);
-                
-                // 检查SSU_URL是否被定义
-                $ssu_url = wpsu_check_ssu_url_defined();
-            } catch (Exception $e) {
-                // 如果有任何错误，忽略它
-                error_log('WP Seamless Update: Error checking SSU_URL in theme: ' . $e->getMessage());
-            }
-            
-            // 清除缓冲区
-            ob_end_clean();
+    if ($is_active) {
+        $has_int_version = defined('INT_VERSION');
+        if (defined('SSU_URL')) {
+            $ssu_url = SSU_URL;
         }
-    }
-    
-    // 返回结果
-    if ($ssu_url) {
-        wp_send_json_success(array(
-            'ssu_url' => $ssu_url,
-            'message' => __('SSU_URL constant found in theme.', 'wp-seamless-update')
+    } else {
+        // 如果这不是当前激活的主题，不再尝试加载它
+        wp_send_json_error(array(
+            'message' => __('Only the active theme is supported for seamless updates.', 'wp-seamless-update')
         ));
+        return;
+    }
+      // 如果发现SSU_URL，直接将其保存到插件设置中
+    if ($ssu_url) {
+        // 自动保存检测到的SSU_URL到设置中
+        $options = get_option(WPSU_OPTION_NAME, array());
+        $current_url = isset($options['update_url']) ? $options['update_url'] : '';
+        
+        // 只有当当前URL为空或与检测到的URL不同时才更新
+        if (empty($current_url) || $current_url !== $ssu_url) {
+            $options['update_url'] = $ssu_url;
+            $options['target_theme'] = $theme_slug; // 确保目标主题也是正确的
+            update_option(WPSU_OPTION_NAME, $options);
+            
+            wp_send_json_success(array(
+                'ssu_url' => $ssu_url,
+                'has_int_version' => $has_int_version,
+                'message' => __('SSU_URL constant found and automatically saved to settings.', 'wp-seamless-update'),
+                'auto_saved' => true
+            ));
+        } else {
+            wp_send_json_success(array(
+                'ssu_url' => $ssu_url,
+                'has_int_version' => $has_int_version,
+                'message' => __('SSU_URL constant found in theme.', 'wp-seamless-update'),
+                'auto_saved' => false
+            ));
+        }
     } else {
         wp_send_json_error(array(
+            'has_int_version' => $has_int_version,
             'message' => __('SSU_URL constant not found in theme.', 'wp-seamless-update')
         ));
     }
