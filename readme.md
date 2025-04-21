@@ -31,7 +31,20 @@ WP Seamless Update allows theme developers to implement seamless updates using p
 
 ### How do I configure the update server?
 
-The update server should provide a JSON file with `display_version`, `internal_version`, and a `files` manifest.
+The server needs to provide a JSON file that follows this format:
+
+```json
+{
+  "display_version": "x.x.x",
+  "internal_version": "x.x.x",
+  "package_url": "https://yourdomain.com/x.x.x.zip",
+  "package_hash": "HASH-SHA1-HEX-VALUE",
+  "files": [
+    "style.css",
+    "functions.php"
+  ]
+}
+```
 
 ## Changelog
 

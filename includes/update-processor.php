@@ -488,15 +488,33 @@ function wpsu_perform_seamless_update( $target_theme_slug ) {
         }
     }
 
+    // --- 新增：切换后验证 ---
+    if ( $switch_ok ) {
+        error_log("WP Seamless Update Cron: 切换完成，开始验证...");
+        $style_css_path = trailingslashit($theme_root) . 'style.css';
+        if ( ! $wp_filesystem->exists( $theme_root ) || ! $wp_filesystem->is_dir( $theme_root ) ) {
+            error_log("WP Seamless Update Cron: 验证失败 - 切换后主题目录 $theme_root 不存在或不是目录。严重错误。尝试回滚。");
+            $switch_ok = false;
+        } elseif ( ! $wp_filesystem->exists( $style_css_path ) || ! $wp_filesystem->is_file( $style_css_path ) ) {
+            error_log("WP Seamless Update Cron: 验证失败 - 切换后 style.css ($style_css_path) 不存在或不是文件。严重错误。尝试回滚。");
+            $switch_ok = false;
+        } else {
+            error_log("WP Seamless Update Cron: 切换后验证成功。主题目录和 style.css 存在。");
+        }
+    }
+    // --- 结束新增验证 ---
+
+
     if ( ! $switch_ok ) {
-        error_log("WP Seamless Update Cron: 第 6 步 - 切换失败。正在回滚。");
+        error_log("WP Seamless Update Cron: 第 6 步 - 切换或验证失败。正在回滚。");
         // 尝试回滚 - 如果原始文件已部分删除，这可能会很棘手
         wpsu_rollback_update( $target_theme_slug, $backup_dir, $theme_root, $staging_dir, $temp_dir );
         // 回滚函数清除 transient
-        return;
+        return; // 终止执行
     }
-    error_log("WP Seamless Update Cron: 第 6 步 - 切换成功。");
-    wpsu_set_update_progress($target_theme_slug, __('New version activated', 'wp-seamless-update'), 95);
+    error_log("WP Seamless Update Cron: 第 6 步 - 切换和验证成功。");
+    wpsu_set_update_progress($target_theme_slug, __('New version activated and verified', 'wp-seamless-update'), 95); // 更新进度消息
+
 
     // --- 第 7 步：完成 ---
     wpsu_set_update_progress($target_theme_slug, __('Step 7: Finalizing update...', 'wp-seamless-update'), 98);
@@ -724,18 +742,40 @@ function wpsu_get_update_progress($target_theme_slug) {
     if ($progress['percent'] >= 0) {
         // error_log("WP Seamless Update: 获取进度信息 - 主题: $target_theme_slug, 消息: {$progress['message']}, 进度: {$progress['percent']}%, 时间: " . ($progress['time'] ? date('Y-m-d H:i:s', $progress['time']) : 'N/A'));
     }
-    
-    // 减少超时检测时间到2分钟，更快地发现问题
+      // 减少超时检测时间到2分钟，更快地发现问题
     if ($progress['time'] > 0 && (time() - $progress['time'] > 120)) {
         // 检测到更新过程已经超过2分钟没有更新进度
         if ($progress['percent'] > 0 && $progress['percent'] < 100 && !$progress['is_error']) { // 仅在未完成且非错误状态下标记为超时
             $last_step = $progress['message'];
             error_log("WP Seamless Update: 检测到更新过程可能超时或卡住，最后进度: {$progress['percent']}%, 最后消息: $last_step");
             
-            // 设置超时错误状态
+            // 收集系统状态信息作为调试参考
+            $debug_info = array(
+                'php_memory_limit' => ini_get('memory_limit'),
+                'php_memory_usage' => size_format(memory_get_usage(true)),
+                'max_execution_time' => ini_get('max_execution_time'),
+                'last_error' => error_get_last() ? json_encode(error_get_last()) : 'none'
+            );
+            
+            // 记录系统状态
+            error_log("WP Seamless Update: 超时诊断信息: " . json_encode($debug_info));
+            
+            // 尝试清理可能的临时文件
+            try {
+                $uploads_base = trailingslashit(wp_upload_dir()['basedir']);
+                $temp_dir_pattern = $uploads_base . trailingslashit(WPSU_TEMP_UPDATE_DIR_BASE) . $target_theme_slug . '-*';
+                $staging_dir_pattern = $uploads_base . 'wpsu-staging-' . $target_theme_slug . '-*';
+                
+                // 记录可能需要清理的目录
+                error_log("WP Seamless Update: 更新超时后可能需要清理的目录: $temp_dir_pattern, $staging_dir_pattern");
+            } catch (Exception $e) {
+                error_log("WP Seamless Update: 尝试诊断超时时出错: " . $e->getMessage());
+            }
+            
+            // 设置超时错误状态，更详细的信息
             wpsu_set_update_progress(
                 $target_theme_slug, 
-                sprintf(__('Update process stalled at "%s". Server may have timed out.', 'wp-seamless-update'), $last_step),
+                sprintf(__('Update process stalled at "%s". Server may have timed out. Check PHP error logs for details.', 'wp-seamless-update'), $last_step),
                 100,
                 true
             );
