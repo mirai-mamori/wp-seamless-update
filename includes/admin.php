@@ -25,6 +25,30 @@ function wpsu_add_admin_menu() {
 add_action( 'admin_menu', 'wpsu_add_admin_menu' );
 
 /**
+ * 注册并加载管理页面所需的样式和脚本
+ */
+function wpsu_admin_enqueue_scripts($hook) {
+    // 只在插件设置页面加载
+    if ($hook !== 'settings_page_' . WPSU_PLUGIN_SLUG) {
+        return;
+    }
+    
+    // 获取CSS文件路径和修改时间作为版本号
+    $css_file_path = plugin_dir_path(dirname(__FILE__)) . 'assets/css/admin-style.css';
+    $css_version = file_exists($css_file_path) ? filemtime($css_file_path) : '1.0';
+    
+    // 注册并加载样式表
+    wp_register_style(
+        'wpsu-admin-styles', 
+        plugins_url('/assets/css/admin-style.css', dirname(__FILE__)), 
+        array('dashicons'), 
+        $css_version
+    );
+    wp_enqueue_style('wpsu-admin-styles');
+}
+add_action('admin_enqueue_scripts', 'wpsu_admin_enqueue_scripts');
+
+/**
  * 注册插件设置。
  */
 function wpsu_settings_init() {
@@ -659,14 +683,161 @@ function wpsu_options_page_html() {
         </h1>
         
         <div class="wpsu-admin-content">
-            <!-- 左侧设置区域 -->
-            <div class="wpsu-settings-container">                <div class="wpsu-card">
+            <div class="wpsu-settings-container">
+                <!-- 信息区：主题信息和更新流程 -->
+                <div class="wpsu-dashboard">
+                    <!-- 主题信息卡片 -->
+                    <div class="wpsu-card wpsu-theme-card">
+                        <div class="wpsu-theme-header">
+                            <?php 
+                            // 获取主题信息
+                            $options = get_option(WPSU_OPTION_NAME, array());
+                            $target_theme_slug = isset($options['target_theme']) ? $options['target_theme'] : null;
+                            $theme_info = $target_theme_slug ? wp_get_theme($target_theme_slug) : null;
+                            $supports_int_version = defined('INT_VERSION');
+                            ?>
+                            
+                            <div class="wpsu-theme-screenshot">
+                                <?php if ($theme_info && $theme_info->get_screenshot()): ?>
+                                    <img src="<?php echo esc_url($theme_info->get_screenshot()); ?>" alt="<?php echo $theme_info && $theme_info->get('Name') ? esc_attr($theme_info->get('Name')) : ''; ?>">
+                                <?php else: ?>
+                                    <div class="wpsu-no-screenshot">
+                                        <span class="dashicons dashicons-admin-appearance"></span>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <div class="wpsu-theme-badge <?php echo $supports_int_version ? 'wpsu-badge-success' : 'wpsu-badge-warning'; ?>">
+                                    <?php if ($supports_int_version): ?>
+                                        <span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e('Ready for Updates', 'wp-seamless-update'); ?>
+                                    <?php else: ?>
+                                        <span class="dashicons dashicons-warning"></span> <?php esc_html_e('INT_VERSION Missing', 'wp-seamless-update'); ?>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            
+                            <div class="wpsu-theme-meta">
+                                <h2>
+                                    <?php echo $theme_info ? esc_html($theme_info->get('Name')) : esc_html__('Unknown Theme', 'wp-seamless-update'); ?>
+                                </h2>
+                                
+                                <div class="wpsu-theme-version">
+                                    <span class="wpsu-version-label"><?php esc_html_e('Version', 'wp-seamless-update'); ?></span>
+                                    <span class="wpsu-version-number"><?php echo $theme_info ? esc_html($theme_info->get('Version')) : ''; ?></span>
+                                </div>
+                                
+                                <?php if ($theme_info && $theme_info->get('Author')): ?>
+                                <div class="wpsu-theme-author">
+                                    <?php printf(esc_html__('By %s', 'wp-seamless-update'), esc_html($theme_info->get('Author'))); ?>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <div class="wpsu-theme-int-version">
+                                    <?php if (!$supports_int_version): ?>
+                                    <div class="wpsu-missing-int">
+                                        <span class="dashicons dashicons-warning"></span>
+                                        <?php esc_html_e('INT_VERSION constant not defined', 'wp-seamless-update'); ?>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="wpsu-card-content">
+                            <!-- 添加隐藏的原始功能以确保SSU_URL自动填充功能正常工作 -->
+                            <div class="wpsu-original-functions" style="display: none;">
+                                <?php wpsu_active_theme_info_render(); ?>
+                            </div>
+                            
+                            <div class="wpsu-theme-requirements">
+                                <h4><?php esc_html_e('Update Requirements', 'wp-seamless-update'); ?></h4>
+                                <ul class="wpsu-pill-list">
+                                    <li class="<?php echo defined('INT_VERSION') ? 'wpsu-pill-success' : 'wpsu-pill-warning'; ?>">
+                                        <span class="dashicons <?php echo defined('INT_VERSION') ? 'dashicons-yes-alt' : 'dashicons-warning'; ?>"></span>
+                                        <?php echo defined('INT_VERSION') ? sprintf(esc_html__('INT_VERSION: %s', 'wp-seamless-update'), INT_VERSION) : esc_html__('INT_VERSION Missing', 'wp-seamless-update'); ?>
+                                    </li>
+                                    <li class="<?php echo !empty($options['update_url']) ? 'wpsu-pill-success' : 'wpsu-pill-warning'; ?>">
+                                        <span class="dashicons <?php echo !empty($options['update_url']) ? 'dashicons-yes-alt' : 'dashicons-warning'; ?>"></span>
+                                        <?php echo !empty($options['update_url']) ? esc_html__('Update URL Set', 'wp-seamless-update') : esc_html__('No Update URL', 'wp-seamless-update'); ?>
+                                    </li>
+                                    <li class="wpsu-pill-info">
+                                        <span class="dashicons dashicons-shield"></span>
+                                        <?php printf(esc_html__('Backups: %d', 'wp-seamless-update'), isset($options['backups_to_keep']) ? $options['backups_to_keep'] : 3); ?>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 更新流程卡片 - 简化版 -->
+                    <div class="wpsu-card wpsu-update-flow-card">
+                        <div class="wpsu-card-header">
+                            <h3><span class="dashicons dashicons-update"></span> <?php esc_html_e('How It Works', 'wp-seamless-update'); ?></h3>
+                        </div>
+                        
+                        <div class="wpsu-update-flow-simplified">
+                            <div class="wpsu-flow-item">
+                                <div class="wpsu-flow-icon">
+                                    <span class="dashicons dashicons-search"></span>
+                                </div>
+                                <div class="wpsu-flow-text">
+                                    <h4><?php esc_html_e('Check', 'wp-seamless-update'); ?></h4>
+                                </div>
+                            </div>
+                            
+                            <div class="wpsu-flow-arrow">
+                                <span class="dashicons dashicons-arrow-right-alt"></span>
+                            </div>
+                            
+                            <div class="wpsu-flow-item">
+                                <div class="wpsu-flow-icon">
+                                    <span class="dashicons dashicons-download"></span>
+                                </div>
+                                <div class="wpsu-flow-text">
+                                    <h4><?php esc_html_e('Download', 'wp-seamless-update'); ?></h4>
+                                </div>
+                            </div>
+                            
+                            <div class="wpsu-flow-arrow">
+                                <span class="dashicons dashicons-arrow-right-alt"></span>
+                            </div>
+                            
+                            <div class="wpsu-flow-item">
+                                <div class="wpsu-flow-icon">
+                                    <span class="dashicons dashicons-backup"></span>
+                                </div>
+                                <div class="wpsu-flow-text">
+                                    <h4><?php esc_html_e('Backup', 'wp-seamless-update'); ?></h4>
+                                </div>
+                            </div>
+                            
+                            <div class="wpsu-flow-arrow">
+                                <span class="dashicons dashicons-arrow-right-alt"></span>
+                            </div>
+                            
+                            <div class="wpsu-flow-item">
+                                <div class="wpsu-flow-icon">
+                                    <span class="dashicons dashicons-yes-alt"></span>
+                                </div>
+                                <div class="wpsu-flow-text">
+                                    <h4><?php esc_html_e('Update', 'wp-seamless-update'); ?></h4>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="wpsu-flow-description">
+                            <p><?php esc_html_e('Seamlessly updates your theme with zero downtime through a secure, automated process.', 'wp-seamless-update'); ?></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 配置区：配置设置 -->
+                <div class="wpsu-card wpsu-config-card">
                     <div class="wpsu-card-header">
-                        <h2><span class="dashicons dashicons-admin-generic"></span> <?php esc_html_e('Theme Update Configuration', 'wp-seamless-update'); ?></h2>
+                        <h2><span class="dashicons dashicons-admin-generic"></span> <?php esc_html_e('Update Configuration', 'wp-seamless-update'); ?></h2>
                     </div>
                     <div class="wpsu-card-body">
                         <?php 
-                        // 显示配置部分的说明文字
+                        // 精简说明文字显示
                         global $wp_settings_sections;
                         $page = WPSU_PLUGIN_SLUG;
                         
@@ -677,20 +848,13 @@ function wpsu_options_page_html() {
                         }
                         ?>
                         
-                        <!-- 显示主题信息 -->
-                        <div class="form-table">
-                            <div class="form-field">
-                                <h3><?php esc_html_e('Active Theme', 'wp-seamless-update'); ?></h3>
-                                <?php wpsu_active_theme_info_render(); ?>
-                            </div>
-                        </div>
-                          <!-- 自动保存选项的显示界面 -->
-                        <div class="form-table" role="presentation">
-                            <div class="form-field">
+                        <div class="wpsu-config-grid">
+                            <div class="wpsu-config-item">
                                 <h3><?php esc_html_e('Update Source URL', 'wp-seamless-update'); ?></h3>
                                 <?php wpsu_update_url_render_autosave(); ?>
                             </div>
-                            <div class="form-field">
+                            
+                            <div class="wpsu-config-item">
                                 <h3><?php esc_html_e('Number of Backups to Keep', 'wp-seamless-update'); ?></h3>
                                 <?php wpsu_backups_to_keep_render_autosave(); ?>
                             </div>
@@ -698,119 +862,77 @@ function wpsu_options_page_html() {
                     </div>
                 </div>
                 
-                <!-- 状态和操作区域 -->
-                <div class="wpsu-card wpsu-status-card">
-                    <div class="wpsu-card-header">
-                        <h2><span class="dashicons dashicons-chart-bar"></span> <?php esc_html_e('Theme Status & Actions', 'wp-seamless-update'); ?></h2>
-                    </div>
-                    <div class="wpsu-card-body">
-                        <?php
-                        // 显示状态信息
-                        wpsu_status_info_render();
-                        ?>
-                        
-                        <div class="wpsu-section-divider"></div>
-                        
-                        <?php
-                        // 显示手动操作
-                        wpsu_manual_actions_render();
-                        ?>
-                    </div>
-                </div>
-                
-                <!-- 工具与诊断 -->
-                <div class="wpsu-card wpsu-tools-card">
-                    <div class="wpsu-card-header">
-                        <h2><span class="dashicons dashicons-admin-tools"></span> <?php esc_html_e('Diagnostics & Tools', 'wp-seamless-update'); ?></h2>
-                    </div>
-                    <div class="wpsu-card-body">
-                        <p class="wpsu-tools-description">
-                            <?php esc_html_e('Use these tools to diagnose and troubleshoot the update process.', 'wp-seamless-update'); ?>
-                        </p>
-                        
-                        <?php
-                        // 显示文件系统测试工具
-                        wpsu_filesystem_test_render();
-                        ?>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 右侧信息面板 -->
-            <div class="wpsu-sidebar">
-                <div class="wpsu-card wpsu-help-card">
-                    <div class="wpsu-card-header">
-                        <h2><span class="dashicons dashicons-info"></span> <?php esc_html_e('Help & Information', 'wp-seamless-update'); ?></h2>
-                    </div>
-                    <div class="wpsu-card-body">
-                        <h3><?php esc_html_e('How It Works', 'wp-seamless-update'); ?></h3>
-                        <p><?php esc_html_e('WP Seamless Update enables partial theme updates based on internal version numbers without requiring a full theme update.', 'wp-seamless-update'); ?></p>
-                        
-                        <h3><?php esc_html_e('Requirements', 'wp-seamless-update'); ?></h3>
-                        <ul class="wpsu-requirements-list">
-                            <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Active theme with INT_VERSION constant', 'wp-seamless-update'); ?></li>
-                            <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Valid update server URL', 'wp-seamless-update'); ?></li>
-                            <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Proper file permissions', 'wp-seamless-update'); ?></li>
-                        </ul>
-                        
-                        <?php if ($theme_info && $target_theme_slug): ?>
-                        <div class="wpsu-current-theme">
-                            <h3><?php esc_html_e('Selected Theme', 'wp-seamless-update'); ?></h3>
-                            <div class="wpsu-theme-info">
-                                <div class="wpsu-theme-icon">
-                                    <?php if ($theme_info->get_screenshot()): ?>
-                                        <img src="<?php echo esc_url($theme_info->get_screenshot()); ?>" alt="<?php echo esc_attr($theme_info->get('Name')); ?>" width="100" height="75">
-                                    <?php else: ?>
-                                        <span class="dashicons dashicons-admin-appearance"></span>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="wpsu-theme-details">
-                                    <h4><?php echo esc_html($theme_info->get('Name')); ?></h4>
-                                    <p><?php echo esc_html($theme_info->get('Version')); ?></p>
-                                    <p class="wpsu-theme-author"><?php printf(esc_html__('By %s', 'wp-seamless-update'), esc_html($theme_info->get('Author'))); ?></p>
-                                </div>
-                            </div>
+                <!-- 合并：状态、操作和诊断 -->
+                <div class="wpsu-card wpsu-status-and-tools-card">
+                    <div class="wpsu-tabs">
+                        <div class="wpsu-tab-nav">
+                            <button class="wpsu-tab-button active" data-tab="status">
+                                <span class="dashicons dashicons-chart-bar"></span> <?php esc_html_e('Status & Actions', 'wp-seamless-update'); ?>
+                            </button>
+                            <button class="wpsu-tab-button" data-tab="diagnostics">
+                                <span class="dashicons dashicons-admin-tools"></span> <?php esc_html_e('Diagnostics', 'wp-seamless-update'); ?>
+                            </button>
                         </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                
-                <!-- 新增：更新流程图卡片 -->
-                <div class="wpsu-card wpsu-workflow-card">
-                    <div class="wpsu-card-header">
-                        <h2><span class="dashicons dashicons-admin-site-alt3"></span> <?php esc_html_e('Update Process', 'wp-seamless-update'); ?></h2>
-                    </div>
-                    <div class="wpsu-card-body">
-                        <div class="wpsu-workflow-steps">
-                            <div class="wpsu-workflow-step">
-                                <div class="wpsu-workflow-step-icon">1</div>
-                                <div class="wpsu-workflow-step-content">
-                                    <h4><?php esc_html_e('Check', 'wp-seamless-update'); ?></h4>
-                                    <p><?php esc_html_e('System checks for available updates by comparing your theme\'s INT_VERSION with the remote version.', 'wp-seamless-update'); ?></p>
-                                </div>
+                        
+                        <div class="wpsu-tab-content">
+                            <!-- 状态和操作选项卡 -->
+                            <div class="wpsu-tab-pane active" id="wpsu-tab-status">
+                                <?php
+                                // 显示状态信息
+                                wpsu_status_info_render();
+                                ?>
+                                
+                                <div class="wpsu-section-divider"></div>
+                                
+                                <?php
+                                // 显示手动操作
+                                wpsu_manual_actions_render();
+                                ?>
                             </div>
                             
-                            <div class="wpsu-workflow-step">
-                                <div class="wpsu-workflow-step-icon">2</div>
-                                <div class="wpsu-workflow-step-content">
-                                    <h4><?php esc_html_e('Download', 'wp-seamless-update'); ?></h4>
-                                    <p><?php esc_html_e('Modified files are downloaded and verified with their hash values.', 'wp-seamless-update'); ?></p>
-                                </div>
-                            </div>
-                            
-                            <div class="wpsu-workflow-step">
-                                <div class="wpsu-workflow-step-icon">3</div>
-                                <div class="wpsu-workflow-step-content">
-                                    <h4><?php esc_html_e('Backup', 'wp-seamless-update'); ?></h4>
-                                    <p><?php esc_html_e('Original theme files are backed up before any changes are made.', 'wp-seamless-update'); ?></p>
-                                </div>
-                            </div>
-                            
-                            <div class="wpsu-workflow-step">
-                                <div class="wpsu-workflow-step-icon">4</div>
-                                <div class="wpsu-workflow-step-content">
-                                    <h4><?php esc_html_e('Update', 'wp-seamless-update'); ?></h4>
-                                    <p><?php esc_html_e('Modified files are applied to your theme with minimal interruption.', 'wp-seamless-update'); ?></p>
+                            <!-- 诊断工具选项卡 -->
+                            <div class="wpsu-tab-pane" id="wpsu-tab-diagnostics">
+                                <p class="wpsu-tools-description">
+                                    <?php esc_html_e('Use these tools to diagnose and troubleshoot the update process.', 'wp-seamless-update'); ?>
+                                </p>
+                                
+                                <?php
+                                // 显示文件系统测试工具
+                                wpsu_filesystem_test_render();
+                                ?>
+                                
+                                <div class="wpsu-section-divider"></div>
+                                
+                                <div class="wpsu-tool-card">
+                                    <div class="wpsu-tool-icon">
+                                        <span class="dashicons dashicons-info"></span>
+                                    </div>
+                                    <div class="wpsu-tool-content">
+                                        <h3><?php esc_html_e('System Information', 'wp-seamless-update'); ?></h3>
+                                        <p><?php esc_html_e('Technical information about your WordPress environment.', 'wp-seamless-update'); ?></p>
+                                        
+                                        <div class="wpsu-system-info">
+                                            <div class="wpsu-system-item">
+                                                <span class="wpsu-system-label"><?php esc_html_e('WordPress Version', 'wp-seamless-update'); ?>:</span>
+                                                <span class="wpsu-system-value"><?php echo esc_html(get_bloginfo('version')); ?></span>
+                                            </div>
+                                            
+                                            <div class="wpsu-system-item">
+                                                <span class="wpsu-system-label"><?php esc_html_e('PHP Version', 'wp-seamless-update'); ?>:</span>
+                                                <span class="wpsu-system-value"><?php echo esc_html(phpversion()); ?></span>
+                                            </div>
+                                            
+                                            <div class="wpsu-system-item">
+                                                <span class="wpsu-system-label"><?php esc_html_e('File Permissions', 'wp-seamless-update'); ?>:</span>
+                                                <span class="wpsu-system-value">
+                                                    <?php 
+                                                    $uploads_dir = wp_upload_dir();
+                                                    echo substr(sprintf('%o', fileperms($uploads_dir['basedir'])), -4);
+                                                    ?>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -820,474 +942,21 @@ function wpsu_options_page_html() {
         </div>
     </div>
 
-    <style type="text/css">
-        /* 现代UI样式 */
-        .wpsu-admin-wrap {
-            margin: 20px 20px 0 0;
-            color: #3c434a;
-        }
-        .wpsu-page-title {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-            font-weight: 500;
-        }
-        .wpsu-admin-content {
-            display: flex;
-            gap: 20px;
-            margin-top: 20px;
-        }
-        .wpsu-settings-container {
-            flex: 2;
-            max-width: 800px;
-        }
-        .wpsu-sidebar {
-            flex: 1;
-            max-width: 350px;
-        }
-        .wpsu-card {
-            background: #fff;
-            border: 1px solid #ccd0d4;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-        .wpsu-card-header {
-            border-bottom: 1px solid #f0f0f1;
-            padding: 15px;
-            background-color: #f8f9fa;
-        }
-        .wpsu-card-header h2 {
-            margin: 0;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            font-weight: 500;
-        }
-        .wpsu-card-header h2 .dashicons {
-            margin-right: 8px;
-        }
-        .wpsu-card-body {
-            padding: 15px;
-        }
-        .wpsu-card-footer {
-            border-top: 1px solid #f0f0f1;
-            padding: 12px 15px;
-            background-color: #f8f9fa;
-            text-align: right;
-        }
-        .wpsu-section-description {
-            margin-bottom: 15px;
-        }
-        
-        /* 状态显示样式 */
-        .wpsu-status-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-        .wpsu-status-item {
-            display: flex;
-            flex-direction: column;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 4px;
-        }
-        .wpsu-status-item-full {
-            grid-column: span 2;
-        }
-        .wpsu-status-label {
-            font-weight: 500;
-            margin-bottom: 5px;
-            color: #646970;
-            font-size: 12px;
-            text-transform: uppercase;
-        }
-        .wpsu-status-value {
-            font-size: 15px;
-            padding: 2px 0;
-            color: #2c3338;
-        }
-        .wpsu-warning {
-            color: #b45b00;
-        }
-        /* 新增：显示错误状态的样式 */
-        .wpsu-status-error {
-            color: #d63638;
-            font-weight: 500;
-        }
-        /* 新增：错误恢复区域的样式 */
-        .wpsu-error-recovery {
-            margin-top: 12px;
-            padding: 12px;
-            background: #fcf0f1;
-            border-left: 4px solid #d63638;
-            border-radius: 3px;
-            font-size: 13px;
-        }
-        .wpsu-error-recovery .dashicons {
-            color: #d63638;
-            margin-right: 5px;
-            vertical-align: middle;
-        }
-        .wpsu-error-recovery ul {
-            margin: 10px 0 12px 25px;
-            list-style-type: disc;
-        }
-        .wpsu-error-recovery ul li {
-            margin-bottom: 5px;
-        }
-        .wpsu-error-recovery button {
-            display: flex;
-            align-items: center;
-        }
-        .wpsu-error-recovery button .dashicons {
-            margin-right: 5px;
-            font-size: 16px;
-            width: 16px;
-            height: 16px;
-        }
-        /* 新增：计划更新信息的样式 */
-        .wpsu-update-scheduled-info {
-            margin-top: 12px;
-            padding: 12px;
-            background: #f0f6fc;
-            border-left: 4px solid #2271b1;
-            border-radius: 3px;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            justify-content: space-between;
-        }
-        .wpsu-update-scheduled-info .dashicons {
-            color: #2271b1;
-            margin-right: 5px;
-        }
-        .wpsu-update-scheduled-info button {
-            display: flex;
-            align-items: center;
-            margin-left: 10px;
-        }
-        .wpsu-update-scheduled-info button .dashicons {
-            margin-right: 5px;
-            font-size: 16px;
-            width: 16px;
-            height: 16px;
-            color: inherit;
-        }
-        
-        /* 操作卡片样式 */
-        .wpsu-actions-container {
-            display: flex;
-            gap: 15px;
-            margin: 15px 0;
-            flex-wrap: wrap;
-        }
-        .wpsu-action-card {
-            flex: 1;
-            min-width: 250px;
-            border: 1px solid #dcdcde;
-            border-radius: 6px;
-            padding: 15px;
-            display: flex;
-            background: #fff;
-            transition: all 0.2s ease;
-        }
-        .wpsu-action-card:hover {
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-        .wpsu-action-primary {
-            border-left: 4px solid #2271b1;
-        }
-        .wpsu-action-icon {
-            margin-right: 15px;
-            color: #646970;
-        }
-        .wpsu-action-icon .dashicons {
-            font-size: 24px;
-            width: 24px;
-            height: 24px;
-        }
-        .wpsu-action-content {
-            flex: 1;
-        }
-        .wpsu-action-content h3 {
-            margin: 0 0 8px;
-            font-size: 15px;
-            font-weight: 500;
-        }
-        .wpsu-action-content p {
-            margin: 0 0 10px;
-            color: #646970;
-        }
-        .wpsu-action-controls {
-            margin-top: 10px;
-        }
-        .wpsu-action-controls .button {
-            display: flex;
-            align-items: center;
-        }
-        .wpsu-action-controls .button .dashicons {
-            font-size: 16px;
-            width: 16px;
-            height: 16px;
-            margin-right: 4px;
-        }
-        .wpsu-update-scheduled {
-            margin-top: 10px;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            color: #996800;
-            background: #fffbe5;
-            padding: 6px 8px;
-            border-radius: 4px;
-        }
-        .wpsu-update-scheduled .dashicons {
-            font-size: 14px;
-            width: 14px;
-            height: 14px;
-            margin-right: 5px;
-        }
-        
-        /* 工具卡片样式 */
-        .wpsu-tool-card {
-            display: flex;
-            background: #f8f9fa;
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-        .wpsu-tool-icon {
-            margin-right: 15px;
-            color: #646970;
-        }
-        .wpsu-tool-icon .dashicons {
-            font-size: 24px;
-            width: 24px;
-            height: 24px;
-        }
-        .wpsu-tool-content {
-            flex: 1;
-        }
-        .wpsu-tool-content h3 {
-            margin: 0 0 8px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        .wpsu-tool-content p {
-            margin: 0 0 10px;
-            color: #646970;
-        }
-        .wpsu-tool-controls .button {
-            display: flex;
-            align-items: center;
-        }
-        .wpsu-tool-controls .button .dashicons {
-            font-size: 16px;
-            width: 16px;
-            height: 16px;
-            margin-right: 4px;
-        }
-        
-        /* 信息卡片内容样式 */
-        .wpsu-help-card h3 {
-            margin: 15px 0 8px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        .wpsu-help-card h3:first-child {
-            margin-top: 0;
-        }
-        .wpsu-requirements-list {
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-        .wpsu-requirements-list li {
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-        }
-        .wpsu-requirements-list .dashicons {
-            margin-right: 5px;
-            color: #46b450;
-        }
-        .wpsu-current-theme {
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #f0f0f1;
-        }
-        .wpsu-theme-info {
-            display: flex;
-            gap: 12px;
-            margin-top: 10px;
-        }
-        .wpsu-theme-icon {
-            width: 80px;
-            height: 60px;
-            background-color: #f0f0f1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .wpsu-theme-icon .dashicons {
-            font-size: 32px;
-            width: 32px;
-            height: 32px;
-            color: #646970;
-        }
-        .wpsu-theme-icon img {
-            width: 100%;
-            height: auto;
-            object-fit: cover;
-        }
-        .wpsu-theme-details {
-            flex: 1;
-        }
-        .wpsu-theme-details h4 {
-            margin: 0 0 4px;
-            font-size: 14px;
-        }
-        .wpsu-theme-details p {
-            margin: 0 0 3px;
-            color: #646970;
-            font-size: 13px;
-        }
-        
-        /* 更新流程图卡片样式 */
-        .wpsu-workflow-steps {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .wpsu-workflow-step {
-            display: flex;
-            align-items: flex-start;
-            padding: 10px 0;
-            position: relative;
-        }
-        .wpsu-workflow-step:not(:last-child):after {
-            content: '';
-            position: absolute;
-            left: 15px;
-            top: 40px;
-            bottom: 0px;
-            width: 1px;
-            background: #dcdcde;
-        }
-        .wpsu-workflow-step-icon {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: #2271b1;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-right: 12px;
-            position: relative;
-            z-index: 1;
-        }
-        .wpsu-workflow-step-content {
-            flex: 1;
-        }
-        .wpsu-workflow-step-content h4 {
-            margin: 0 0 5px;
-            font-size: 14px;
-        }
-        .wpsu-workflow-step-content p {
-            margin: 0;
-            color: #646970;
-            font-size: 13px;
-        }
-        
-        /* 进度条样式 */
-        .wpsu-progress-container {
-            margin: 15px 0;
-            background-color: #f0f0f1;
-            height: 20px;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .wpsu-progress-bar {
-            height: 100%;
-            background-color: #2271b1;
-            width: 0%;
-            transition: width 0.5s ease;
-        }
-        .notice-error .wpsu-progress-bar {
-            background-color: #d63638;
-        }
-        .notice-success .wpsu-progress-bar {
-            background-color: #00a32a;
-        }
-        .wpsu-progress-message {
-            margin: 8px 0;
-            font-size: 13px;
-            color: #50575e;
-        }
-        
-        /* 通用元素样式 */
-        .wpsu-section-divider {
-            border-top: 1px solid #f0f0f1;
-            margin: 15px 0;
-        }
-        .wpsu-notice {
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-        }
-        .wpsu-notice .dashicons {
-            margin-right: 8px;
-        }
-        .wpsu-notice-warning {
-            background: #fcf9e8;
-            color: #996800;
-        }
-        .wpsu-notice-error {
-            background: #fcf0f1;
-            color: #b32d2e;
-        }
-        
-        /* 响应式设计 */
-        @media screen and (max-width: 1200px) {
-            .wpsu-admin-content {
-                flex-direction: column;
-            }
-            .wpsu-settings-container, 
-            .wpsu-sidebar {
-                max-width: none;
-                width: 100%;
-            }
-        }
-        @media screen and (max-width: 782px) {
-            .wpsu-status-grid {
-                grid-template-columns: 1fr;
-            }
-            .wpsu-status-item-full {
-                grid-column: 1;
-            }
-            .wpsu-actions-container {
-                flex-direction: column;
-            }
-            .wpsu-action-card {
-                width: 100%;
-            }
-        }
-    </style>
-
     <script type="text/javascript">
         jQuery(document).ready(function($) {
+            // 选项卡功能
+            $('.wpsu-tab-button').on('click', function() {
+                var targetTab = $(this).data('tab');
+                
+                // 更新按钮状态
+                $('.wpsu-tab-button').removeClass('active');
+                $(this).addClass('active');
+                
+                // 更新内容面板
+                $('.wpsu-tab-pane').removeClass('active');
+                $('#wpsu-tab-' + targetTab).addClass('active');
+            });
+            
             // 检查更新按钮处理程序
             $('#wpsu-manual-check-button').on('click', function() {
                 var $button = $(this);
@@ -1321,7 +990,7 @@ function wpsu_options_page_html() {
                         }
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                         $status.text('<?php echo esc_js( __( 'AJAX Error:', 'wp-seamless-update' ) ); ?> ' + textStatus + ' - ' + errorThrown).addClass('notice-error');
+                         $status.text('<?php esc_js( __( 'AJAX Error:', 'wp-seamless-update' ) ); ?> ' + textStatus + ' - ' + errorThrown).addClass('notice-error');
                     },
                     complete: function() {
                         $spinner.removeClass('is-active');
@@ -1332,7 +1001,9 @@ function wpsu_options_page_html() {
                         }, 8000);
                     }
                 });
-            });            // 执行更新按钮处理程序
+            });
+            
+            // 执行更新按钮处理程序
             $('#wpsu-trigger-update-button').on('click', function() {
                 var $button = $(this);
                 var $spinner = $button.siblings('.spinner');
@@ -1346,7 +1017,9 @@ function wpsu_options_page_html() {
                 $button.prop('disabled', true);
                 $spinner.addClass('is-active');
                 $status.html('<?php echo esc_js( __( 'Executing update...', 'wp-seamless-update' ) ); ?>' + progressBarHtml)
-                       .removeClass('notice-error notice-success notice-warning');                var updateProgressInterval;
+                       .removeClass('notice-error notice-success notice-warning');
+                
+                var updateProgressInterval;
                 var updateProgressStarted = false;
                 
                 // 轮询更新进度的函数
@@ -1418,14 +1091,14 @@ function wpsu_options_page_html() {
                         setTimeout(function() {
                             if (!updateProgressStarted) {
                                 clearInterval(updateProgressInterval);
-                                $status.find('.wpsu-progress-message').text('<?php echo esc_js( __( 'Update process is not responding. Check server error logs.', 'wp-seamless-update' ) ); ?>');
+                                $status.find('.wpsu-progress-message').text('<?php esc_js( __( 'Update process is not responding. Check server error logs.', 'wp-seamless-update' ) ); ?>');
                                 $status.addClass('notice-error');
                                 $button.prop('disabled', false);
                             }
                         }, 15000);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                         $status.text('<?php echo esc_js( __( 'AJAX Error:', 'wp-seamless-update' ) ); ?> ' + textStatus + ' - ' + errorThrown).addClass('notice-error');
+                         $status.text('<?php esc_html__( 'AJAX Error:', 'wp-seamless-update' ); ?> ' + textStatus + ' - ' + errorThrown).addClass('notice-error');
                          $button.prop('disabled', false); // AJAX 失败时重新启用
                     },
                     complete: function() {
@@ -1463,7 +1136,7 @@ function wpsu_options_page_html() {
                         }
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                         $status.text('<?php echo esc_js( __( 'AJAX Error:', 'wp-seamless-update' ) ); ?> ' + textStatus + ' - ' + errorThrown).addClass('notice-error');
+                         $status.text('<?php esc_js( __( 'AJAX Error:', 'wp-seamless-update' ) ); ?> ' + textStatus + ' - ' + errorThrown).addClass('notice-error');
                     },
                     complete: function() {
                         $spinner.removeClass('is-active');

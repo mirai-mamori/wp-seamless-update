@@ -1,0 +1,803 @@
+/* 基础样式优化 */
+.wpsu-admin-wrap {
+    margin: 20px 20px 0 0;
+    color: #1d2327;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    max-width: 1200px;
+}
+
+.wpsu-page-title {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+    font-weight: 500;
+    color: #1d2327;
+}
+
+.wpsu-admin-content {
+    display: flex;
+    margin-top: 16px;
+}
+
+.wpsu-settings-container {
+    flex: 1;
+    min-width: 0;
+}
+
+/* 信息仪表板布局 - 调整间距 */
+.wpsu-dashboard {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
+    grid-gap: 20px;
+    margin-bottom: 20px;
+}
+
+/* 卡片基础样式优化 */
+.wpsu-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    overflow: hidden;
+    transition: all 0.2s ease;
+    border: 1px solid #e2e4e7;
+    margin-bottom: 20px;
+}
+
+.wpsu-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transform: translateY(-1px);
+}
+
+.wpsu-card:last-child {
+    margin-bottom: 0;
+}
+
+.wpsu-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f1;
+    background: linear-gradient(to right, #f9f9f9, #fff);
+}
+
+.wpsu-card-header h2, 
+.wpsu-card-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.wpsu-card-header h2 {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.wpsu-card-header h3 {
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.wpsu-card-header .dashicons {
+    margin-right: 8px;
+    color: #2271b1;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.wpsu-card-body {
+    padding: 16px 20px;
+}
+
+.wpsu-card-content {
+    padding: 20px 20px 0px 20px;
+}
+
+/* 主题卡片样式优化 */
+.wpsu-theme-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.wpsu-theme-header {
+    display: flex;
+    position: relative;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.wpsu-theme-screenshot {
+    width: 220px;
+    height: 165px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #f6f7f7;
+}
+
+.wpsu-theme-screenshot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.wpsu-no-screenshot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background: linear-gradient(135deg, #f6f7f7 0%, #eaeaea 100%);
+}
+
+.wpsu-no-screenshot .dashicons {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #a7aaad;
+}
+
+.wpsu-theme-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1;
+}
+
+.wpsu-badge-success {
+    background-color: #00a32a;
+    color: white;
+}
+
+.wpsu-badge-warning {
+    background-color: #f0b849;
+    color: #1d2327;
+}
+
+.wpsu-theme-badge .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+}
+
+.wpsu-theme-meta {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.wpsu-theme-meta h2 {
+    margin: 0 0 12px;
+    font-size: 18px;
+    color: #1d2327;
+    line-height: 1.2;
+}
+
+.wpsu-theme-version {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.wpsu-version-label {
+    font-weight: 500;
+    margin-right: 8px;
+    color: #646970;
+}
+
+.wpsu-version-number {
+    color: #2271b1;
+    font-weight: 500;
+}
+
+.wpsu-theme-author {
+    color: #646970;
+    margin-bottom: 12px;
+    font-size: 13px;
+}
+
+.wpsu-theme-int-version {
+    margin-top: auto;
+    padding-top: 12px;
+}
+
+/* 主题需求列表样式 */
+.wpsu-theme-requirements h4 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1d2327;
+}
+
+.wpsu-pill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.wpsu-pill-list li {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.wpsu-pill-success {
+    background-color: #edfaef;
+    color: #00a32a;
+}
+
+.wpsu-pill-warning {
+    background-color: #fcf9e8;
+    color: #996800;
+}
+
+.wpsu-pill-info {
+    background-color: #f0f6fc;
+    color: #2271b1;
+}
+
+.wpsu-pill-list .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    margin-right: 5px;
+}
+
+/* 简化的更新流程卡片 */
+.wpsu-update-flow-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin-bottom: 0;
+    flex-wrap: wrap;
+    align-content: center;
+}
+
+.wpsu-update-flow-simplified {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 18px;
+    flex-wrap: wrap;
+}
+
+.wpsu-flow-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 12px 8px;
+}
+
+.wpsu-flow-icon {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: #f0f6fc;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+}
+
+.wpsu-flow-item:hover .wpsu-flow-icon {
+    transform: scale(1.1);
+    background-color: #e5f0f9;
+}
+
+.wpsu-flow-icon .dashicons {
+    color: #2271b1;
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+.wpsu-flow-text h4 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: #1d2327;
+}
+
+.wpsu-flow-arrow {
+    margin: 0 4px;
+    color: #2271b1;
+    opacity: 0.7;
+}
+
+.wpsu-flow-arrow .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.wpsu-flow-description {
+    padding: 0 20px 16px;
+    text-align: center;
+    color: #646970;
+    font-size: 13px;
+}
+
+.wpsu-flow-description p {
+    margin: 0;
+}
+
+/* 配置区样式优化 */
+.wpsu-section-description {
+    margin-bottom: 16px;
+}
+
+.wpsu-section-description p {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: #646970;
+}
+
+.wpsu-section-description p:last-child {
+    margin-bottom: 0;
+}
+
+.wpsu-config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+.wpsu-config-item {
+    padding: 14px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+.wpsu-config-item h3 {
+    margin: 0 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+    font-size: 15px;
+    color: #23282d;
+}
+
+/* 选项卡样式 */
+.wpsu-tabs {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.wpsu-tab-nav {
+    display: flex;
+    border-bottom: 1px solid #f0f0f1;
+    background-color: #f8f9fa;
+}
+
+.wpsu-tab-button {
+    padding: 14px 20px;
+    border: none;
+    background: transparent;
+    color: #646970;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.15s ease;
+    border-bottom: 2px solid transparent;
+}
+
+.wpsu-tab-button:hover {
+    color: #2271b1;
+    background-color: rgba(0,0,0,0.02);
+}
+
+.wpsu-tab-button.active {
+    color: #2271b1;
+    border-bottom-color: #2271b1;
+    background-color: #fff;
+}
+
+.wpsu-tab-button .dashicons {
+    margin-right: 6px;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.wpsu-tab-content {
+    flex: 1;
+    overflow: auto;
+}
+
+.wpsu-tab-pane {
+    display: none;
+    padding: 16px 20px;
+}
+
+.wpsu-tab-pane.active {
+    display: block;
+}
+
+/* 系统信息样式 */
+.wpsu-system-info {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 12px;
+    font-family: monospace;
+    font-size: 13px;
+}
+
+.wpsu-system-item {
+    padding: 3px 0;
+    display: flex;
+}
+
+.wpsu-system-label {
+    font-weight: bold;
+    min-width: 150px;
+    color: #646970;
+}
+
+.wpsu-system-value {
+    color: #3c434a;
+}
+
+/* 自动保存状态消息优化 */
+.wpsu-autosave-status {
+    margin-top: 6px;
+    font-size: 12px;
+    height: 18px;
+}
+
+.wpsu-autosave-status.success {
+    color: #00a32a;
+}
+
+.wpsu-autosave-status.error {
+    color: #d63638;
+}
+
+/* 状态和操作卡片样式 */
+.wpsu-section-divider {
+    border-top: 1px solid #f0f0f1;
+    margin: 14px 0;
+}
+
+/* 工具卡片优化 */
+.wpsu-tools-description {
+    margin: 0 0 14px;
+    font-size: 13px;
+    color: #646970;
+}
+
+.wpsu-tool-card {
+    display: flex;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 14px;
+    border: 1px solid #eee;
+}
+
+.wpsu-tool-card:last-child {
+    margin-bottom: 0;
+}
+
+.wpsu-tool-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: #f0f6fc;
+    border-radius: 6px;
+    margin-right: 14px;
+    flex-shrink: 0;
+}
+
+.wpsu-tool-icon .dashicons {
+    color: #2271b1;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+.wpsu-tool-content {
+    flex: 1;
+}
+
+.wpsu-tool-content h3 {
+    margin: 0 0 5px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.wpsu-tool-content p {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: #646970;
+}
+
+.wpsu-tool-controls {
+    margin-top: 10px;
+}
+
+/* 更新进度条 */
+.wpsu-progress-container {
+    height: 6px;
+    background-color: #f0f0f1;
+    border-radius: 3px;
+    margin: 10px 0;
+    overflow: hidden;
+}
+
+.wpsu-progress-bar {
+    height: 100%;
+    background-color: #2271b1;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.wpsu-progress-message {
+    font-size: 12px;
+    color: #646970;
+    text-align: center;
+}
+
+/* 状态网格样式 */
+.wpsu-status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.wpsu-status-item {
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+}
+
+.wpsu-status-item-full {
+    grid-column: span 2;
+}
+
+.wpsu-status-label {
+    font-weight: 500;
+    color: #646970;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.wpsu-status-value {
+    color: #2c3338;
+}
+
+.wpsu-status-value.wpsu-warning {
+    color: #996800;
+}
+
+.wpsu-status-error {
+    color: #d63638;
+}
+
+.wpsu-error-recovery {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #fcf9e8;
+    border-left: 4px solid #f0b849;
+    border-radius: 0 6px 6px 0;
+}
+
+.wpsu-error-recovery ul {
+    margin: 8px 0 8px 24px;
+    font-size: 12px;
+}
+
+.wpsu-update-scheduled-info {
+    margin-top: 10px;
+    padding: 8px 10px;
+    background-color: #f0f6fc;
+    border-left: 4px solid #72aee6;
+    border-radius: 0 6px 6px 0;
+    display: flex;
+    align-items: center;
+}
+
+.wpsu-update-scheduled-info .dashicons {
+    margin-right: 5px;
+}
+
+/* 操作区域样式 */
+.wpsu-actions-container {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.wpsu-action-card {
+    flex: 1;
+    background-color: #fff;
+    border-radius: 8px;
+    border: 1px solid #e2e4e7;
+    padding: 16px;
+    display: flex;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.wpsu-action-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transform: translateY(-1px);
+}
+
+.wpsu-action-primary {
+    border-color: #2271b1;
+    background-color: #f0f6fc;
+}
+
+.wpsu-action-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f0f6fc;
+    border-radius: 50%;
+    margin-right: 14px;
+    flex-shrink: 0;
+}
+
+.wpsu-action-primary .wpsu-action-icon {
+    background-color: #2271b1;
+}
+
+.wpsu-action-icon .dashicons {
+    color: #2271b1;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+.wpsu-action-primary .wpsu-action-icon .dashicons {
+    color: #fff;
+}
+
+.wpsu-action-content {
+    flex: 1;
+}
+
+.wpsu-action-content h3 {
+    margin: 0 0 8px;
+    color: #1d2327;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.wpsu-action-content p {
+    margin: 0 0 12px;
+    color: #646970;
+    font-size: 13px;
+}
+
+.wpsu-action-controls {
+    display: flex;
+    align-items: center;
+}
+
+.wpsu-action-controls .spinner {
+    float: none;
+    margin-left: 10px;
+}
+
+.wpsu-update-scheduled {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #2271b1;
+    display: flex;
+    align-items: center;
+}
+
+.wpsu-update-scheduled .dashicons {
+    margin-right: 4px;
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+}
+
+/* 响应式优化 */
+@media screen and (max-width: 960px) {
+    .wpsu-dashboard {
+        grid-template-columns: 1fr;
+        grid-gap: 16px;
+    }
+    
+    .wpsu-theme-header {
+        flex-direction: column;
+    }
+    
+    .wpsu-theme-screenshot {
+        width: 100%;
+        height: 0;
+        padding-bottom: 56.25%; /* 16:9 比例 */
+    }
+    
+    .wpsu-theme-screenshot img,
+    .wpsu-no-screenshot {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .wpsu-theme-badge {
+        top: 8px;
+        right: 8px;
+    }
+    
+    .wpsu-config-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .wpsu-update-flow-simplified {
+        flex-direction: column;
+    }
+    
+    .wpsu-flow-arrow {
+        transform: rotate(90deg);
+        margin: 0;
+    }
+}
+
+@media screen and (max-width: 782px) {
+    .wpsu-tab-button {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .wpsu-tab-pane {
+        padding: 12px 15px;
+    }
+    
+    .wpsu-card-body,
+    .wpsu-card-content {
+        padding: 12px 15px;
+    }
+    
+    .wpsu-config-item,
+    .wpsu-tool-card {
+        padding: 12px;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .wpsu-actions-container {
+        flex-direction: column;
+    }
+    
+    .wpsu-action-card {
+        width: 100%;
+        margin-bottom: 12px;
+    }
+    
+    .wpsu-action-card:last-child {
+        margin-bottom: 0;
+    }
+}
