@@ -36,17 +36,14 @@ function wpsu_ajax_manual_check() {
 
     // 模拟获取 transient（或强制检查）
     delete_site_transient('update_themes'); // 清除 transient 以强制下次加载进行检查
-    wp_update_themes(); // 触发更新检查
-
-    // 提供一个通用的成功消息，实际状态将在 WP 检查运行后更新。
-    $status_message = __( 'Update check triggered. Status will refresh on the next automatic check or page load.', 'wp-seamless-update' );
-    // 确保从选项获取的状态在输出前是安全的（尽管 get_option 通常是安全的）
-    $last_status = get_option( 'wpsu_last_check_status_' . $target_theme_slug, __('N/A', 'wp-seamless-update') );
-    // 如果 $last_status 可能包含 HTML 或脚本，则需要进一步清理，但这里假设它只是文本状态。
-
-    wp_send_json_success( array(
+    wp_update_themes(); // 触发更新检查    // 提供一个通用的成功消息，实际状态将在 WP 检查运行后更新。
+    $status_message = __( 'Update check triggered. Status will update automatically in a moment.', 'wp-seamless-update' );
+    
+    // 获取当前更新状态并确保安全输出
+    $last_status = get_option( 'wpsu_last_check_status_' . $target_theme_slug, __('N/A', 'wp-seamless-update') );    wp_send_json_success( array(
         'message' => $status_message,
-        'status' => esc_html( $last_status ) // 对输出进行转义以提高安全性
+        'status' => esc_html( $last_status ), // 对输出进行转义以提高安全性
+        'refresh' => true // 添加刷新字段，告知前端刷新页面以显示最新状态
     ) );
 }
 add_action( 'wp_ajax_wpsu_manual_check', 'wpsu_ajax_manual_check' );
@@ -193,12 +190,12 @@ function wpsu_ajax_trigger_update() {
         // 设置执行前的状态，以便在发生PHP错误时有记录
         update_option('wpsu_last_check_status_' . $target_theme_slug, __('Update execution in progress...', 'wp-seamless-update'));
         // 记录开始时间
-        $start_time = microtime(true);
-
-        // 确保处理程序文件已加载
+        $start_time = microtime(true);        // 确保处理程序文件已加载
         if (!function_exists('wpsu_perform_seamless_update')) {
              require_once(dirname(__FILE__) . '/update-processor.php');
-        }        // 执行更新
+        }
+        
+        // 执行更新
         if (function_exists('wpsu_perform_seamless_update')) {
             // 添加错误处理
             try {
@@ -438,9 +435,6 @@ function wpsu_ajax_get_update_progress() {
 add_action('wp_ajax_wpsu_get_update_progress', 'wpsu_ajax_get_update_progress');
 
 /**
- * AJAX处理程序，用于检测主题中的SSU_URL常量
- */
-/**
  * AJAX处理程序，用于自动保存设置
  */
 function wpsu_ajax_autosave_setting() {
@@ -478,10 +472,10 @@ function wpsu_ajax_autosave_setting() {
                 return;
             }
             break;
-            
-        case 'backups_to_keep':
+              case 'backups_to_keep':
             $backups = absint($setting_value);
-            $options['backups_to_keep'] = $backups;
+            // 确保备份数不为负数，最小值为0（禁用备份）
+            $options['backups_to_keep'] = max(0, $backups);
             break;
             
         default:

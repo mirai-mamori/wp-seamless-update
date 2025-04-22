@@ -1,6 +1,8 @@
 <?php
 /**
  * Helper functions for WP Seamless Update
+ *
+ * @package WP_Seamless_Update
  */
 
 // If this file is called directly, abort.
@@ -8,15 +10,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     die;
 }
 
-// 确保使用正确的翻译函数
-function wpsu_get_text($text) {
-    return __($text, 'wp-seamless-update');
-}
-
-// 确保使用正确的翻译函数（带回显）
-function wpsu_echo_text($text) {
-    _e($text, 'wp-seamless-update');
-}
+// 注意: 之前的 wpsu_get_text 和 wpsu_echo_text 函数已移除
+// 因为它们是对 WordPress 内置翻译函数的简单封装且未被使用
+// 请直接使用 __($text, 'wp-seamless-update') 和 _e($text, 'wp-seamless-update')
 
 // 确保所有错误消息和通知也使用文本域
 function wpsu_admin_notice($message, $type = 'info') {

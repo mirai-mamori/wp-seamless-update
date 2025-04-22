@@ -240,7 +240,7 @@ function wpsu_cleanup_theme_data($theme_slug, $thorough_cleanup = false) {
  */
 function wpsu_add_plugin_action_links($links) {
     // 获取插件设置页面URL
-    $settings_link = '<a href="' . esc_url(admin_url('options-general.php?page=' . WPSU_PLUGIN_SLUG)) . '">' . esc_html__('设置', 'wp-seamless-update') . '</a>';
+    $settings_link = '<a href="' . esc_url(admin_url('options-general.php?page=' . WPSU_PLUGIN_SLUG)) . '">' . esc_html__('Settings', 'wp-seamless-update') . '</a>';
     
     // 将设置链接添加到链接数组的开头
     array_unshift($links, $settings_link);

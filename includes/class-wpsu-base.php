@@ -34,10 +34,10 @@ class WPSU_Base {
         }
         return self::$instance;
     }
-    
-    /**
+      /**
      * 初始化插件钩子
-     */    private function __construct() {
+     */
+    private function __construct() {
         // 加载国际化
         add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
         
@@ -67,7 +67,7 @@ class WPSU_Base {
     public function add_custom_cron_interval( $schedules ) {
         $schedules['wpsu_two_hours'] = array(
             'interval' => 2 * HOUR_IN_SECONDS,
-            'display'  => __( '每2小时一次', 'wp-seamless-update' )
+            'display'  => __( 'Every 2 hours', 'wp-seamless-update' )
         );
         return $schedules;
     }

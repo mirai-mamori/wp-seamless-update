@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Seamless Update 1.0.0\n"
 "Report-Msgid-Bugs-To: https://docs.fuukei.org/\n"
-"POT-Creation-Date: 2025-04-21 21:52+0900\n"
+"POT-Creation-Date: 2025-04-22 22:02+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,562 +28,582 @@ msgstr ""
 msgid "Seamless Update"
 msgstr ""
 
-#: includes/admin.php:59
+#: includes/admin.php:78
 msgid "Seamless Update Configuration"
 msgstr ""
 
-#: includes/admin.php:66
+#: includes/admin.php:85
 msgid "Active Theme"
 msgstr ""
 
-#: includes/admin.php:74 includes/admin.php:853
+#: includes/admin.php:93 includes/admin.php:878
 msgid "Update Source URL"
 msgstr ""
 
-#: includes/admin.php:82 includes/admin.php:858
+#: includes/admin.php:101 includes/admin.php:883
 msgid "Number of Backups to Keep"
 msgstr ""
 
-#: includes/admin.php:91 includes/admin.php:870
+#: includes/admin.php:110 includes/admin.php:895
 msgid "Status & Actions"
 msgstr ""
 
-#: includes/admin.php:98
+#: includes/admin.php:117
 msgid "Current Status"
 msgstr ""
 
-#: includes/admin.php:106
+#: includes/admin.php:125
 msgid "Manual Actions"
 msgstr ""
 
-#: includes/admin.php:115
+#: includes/admin.php:134
 msgid "Filesystem Test"
 msgstr ""
 
-#: includes/admin.php:148
+#: includes/admin.php:167
 msgid "Warning: The active theme does not define INT_VERSION constant which is required for seamless updates."
 msgstr ""
 
-#: includes/admin.php:157
+#: includes/admin.php:176
 msgid "No active theme detected. Please activate a theme that supports seamless updates."
 msgstr ""
 
-#: includes/admin.php:171
+#: includes/admin.php:190
 msgid "Invalid Update Source URL."
 msgstr ""
 
-#: includes/admin.php:192
+#: includes/admin.php:211
 msgid "The plugin will automatically use your currently active theme for seamless updates. Please provide the URL for the update server."
 msgstr ""
 
-#: includes/admin.php:193
+#: includes/admin.php:212
 msgid "The update server URL should point to an endpoint providing a JSON file (e.g., version.json) with `display_version`, `internal_version`, and a `files` manifest (path, hash, url)."
 msgstr ""
 
-#: includes/admin.php:215
+#: includes/admin.php:234
 #, php-format
 msgid "Version: %s"
 msgstr ""
 
-#: includes/admin.php:222
+#: includes/admin.php:241
 #, php-format
 msgid "Supports seamless updates (INT_VERSION: %s)"
 msgstr ""
 
-#: includes/admin.php:226
+#: includes/admin.php:245
 msgid "Theme does not support seamless updates. INT_VERSION constant not found."
 msgstr ""
 
-#: includes/admin.php:231
+#: includes/admin.php:250
 msgid "The plugin will automatically use your currently active theme for seamless updates."
 msgstr ""
 
-#: includes/admin.php:292
+#: includes/admin.php:311
 msgid "URL pointing to the JSON file containing update information."
 msgstr ""
 
-#: includes/admin.php:304
+#: includes/admin.php:323
 msgid "URL pointing to the JSON file containing update information. Changes are automatically saved."
 msgstr ""
 
-#: includes/admin.php:313 includes/admin.php:408
+#: includes/admin.php:332 includes/admin.php:427
 msgid "Typing..."
 msgstr ""
 
-#: includes/admin.php:317 includes/admin.php:412
+#: includes/admin.php:336 includes/admin.php:431
 msgid "Saving..."
 msgstr ""
 
-#: includes/admin.php:329 includes/admin.php:425
+#: includes/admin.php:348 includes/admin.php:444
 msgid "Saved"
 msgstr ""
 
-#: includes/admin.php:337 includes/admin.php:353
+#: includes/admin.php:356 includes/admin.php:372
 msgid "Settings saved, refreshing..."
 msgstr ""
 
-#: includes/admin.php:369 includes/admin.php:434
+#: includes/admin.php:388 includes/admin.php:453
 msgid "Error saving"
 msgstr ""
 
-#: includes/admin.php:387
+#: includes/admin.php:406
 msgid "Number of backups to retain. Set to 0 to disable backups (not recommended)."
 msgstr ""
 
-#: includes/admin.php:399
+#: includes/admin.php:418
 msgid "Number of backups to retain. Set to 0 to disable backups (not recommended). Changes are automatically saved."
 msgstr ""
 
-#: includes/admin.php:448
+#: includes/admin.php:467
 msgid "View the current status of the managed theme and perform manual actions."
 msgstr ""
 
-#: includes/admin.php:459
+#: includes/admin.php:478
 msgid "No target theme selected."
 msgstr ""
 
-#: includes/admin.php:465
+#: includes/admin.php:484
 msgid "Selected target theme is not installed or accessible."
 msgstr ""
 
-#: includes/admin.php:470 includes/admin.php:485 includes/admin.php:981
-#: includes/admin.php:1167 includes/admin.php:1206 includes/ajax.php:38
+#: includes/admin.php:489 includes/admin.php:504 includes/admin.php:1006
+#: includes/admin.php:1192 includes/admin.php:1231 includes/ajax.php:43
 msgid "N/A"
 msgstr ""
 
-#: includes/admin.php:478
+#: includes/admin.php:497
 msgid "Constant INT_VERSION not found in active theme functions.php"
 msgstr ""
 
-#: includes/admin.php:481
+#: includes/admin.php:500
 msgid "Theme not active, cannot read INT_VERSION"
 msgstr ""
 
-#: includes/admin.php:484
+#: includes/admin.php:503
 msgid "Never"
 msgstr ""
 
-#: includes/admin.php:508
+#: includes/admin.php:527
 msgid "Theme Name"
 msgstr ""
 
-#: includes/admin.php:513
+#: includes/admin.php:532
 msgid "Display Version"
 msgstr ""
 
-#: includes/admin.php:518
+#: includes/admin.php:537
 msgid "Internal Version"
 msgstr ""
 
-#: includes/admin.php:525
+#: includes/admin.php:544
 msgid "Last Check"
 msgstr ""
 
-#: includes/admin.php:532
+#: includes/admin.php:551
 msgid "Status"
 msgstr ""
 
-#: includes/admin.php:538
+#: includes/admin.php:557
 msgid "Update issues detected. Possible solutions:"
 msgstr ""
 
-#: includes/admin.php:540
+#: includes/admin.php:559
 msgid "Check theme file permissions (should be 644 for files, 755 for directories)"
 msgstr ""
 
-#: includes/admin.php:541
+#: includes/admin.php:560
 msgid "Ensure the INT_VERSION constant is properly defined in your theme's functions.php"
 msgstr ""
 
-#: includes/admin.php:542
+#: includes/admin.php:561
 msgid "Verify the update server is accessible and returns valid data"
 msgstr ""
 
-#: includes/admin.php:543
+#: includes/admin.php:562
 msgid "Review PHP error logs for detailed error messages"
 msgstr ""
 
-#: includes/admin.php:546
+#: includes/admin.php:565
 msgid "Reset Error Status"
 msgstr ""
 
-#: includes/admin.php:554
+#: includes/admin.php:573
 #, php-format
 msgid "Update scheduled for: %s"
 msgstr ""
 
-#: includes/admin.php:556
+#: includes/admin.php:575
 msgid "Cancel Scheduled Update"
 msgstr ""
 
-#: includes/admin.php:596
+#: includes/admin.php:615
 msgid "Check for Updates"
 msgstr ""
 
-#: includes/admin.php:597
+#: includes/admin.php:616
 msgid "Manually trigger the update check process."
 msgstr ""
 
-#: includes/admin.php:600
+#: includes/admin.php:619
 msgid "Check Now"
 msgstr ""
 
-#: includes/admin.php:613
+#: includes/admin.php:632
 msgid "Execute Update"
 msgstr ""
 
-#: includes/admin.php:614
+#: includes/admin.php:633
 msgid "Execute a scheduled or immediate update for your theme."
 msgstr ""
 
-#: includes/admin.php:617
+#: includes/admin.php:636
 msgid "Execute Update Now"
 msgstr ""
 
-#: includes/admin.php:625
+#: includes/admin.php:644
 #, php-format
 msgid "Update scheduled at: %s"
 msgstr ""
 
-#: includes/admin.php:644
+#: includes/admin.php:663
 msgid "Filesystem Access Test"
 msgstr ""
 
-#: includes/admin.php:645
+#: includes/admin.php:664
 msgid "Check if WP_Filesystem can be initialized correctly for background operations."
 msgstr ""
 
-#: includes/admin.php:648
+#: includes/admin.php:667
 msgid "Run Test"
 msgstr ""
 
-#: includes/admin.php:711
+#: includes/admin.php:736
 msgid "Ready for Updates"
 msgstr ""
 
-#: includes/admin.php:713 includes/admin.php:756
+#: includes/admin.php:738 includes/admin.php:781
 msgid "INT_VERSION Missing"
 msgstr ""
 
-#: includes/admin.php:720
+#: includes/admin.php:745
 msgid "Unknown Theme"
 msgstr ""
 
-#: includes/admin.php:724
+#: includes/admin.php:749
 msgid "Version"
 msgstr ""
 
-#: includes/admin.php:730
+#: includes/admin.php:755
 #, php-format
 msgid "By %s"
 msgstr ""
 
-#: includes/admin.php:738
+#: includes/admin.php:763
 msgid "INT_VERSION constant not defined"
 msgstr ""
 
-#: includes/admin.php:752
+#: includes/admin.php:777
 msgid "Update Requirements"
 msgstr ""
 
-#: includes/admin.php:756
+#: includes/admin.php:781
 #, php-format
 msgid "INT_VERSION: %s"
 msgstr ""
 
-#: includes/admin.php:760
+#: includes/admin.php:785
 msgid "Update URL Set"
 msgstr ""
 
-#: includes/admin.php:760
+#: includes/admin.php:785
 msgid "No Update URL"
 msgstr ""
 
-#: includes/admin.php:764
+#: includes/admin.php:789
 #, php-format
 msgid "Backups: %d"
 msgstr ""
 
-#: includes/admin.php:774
+#: includes/admin.php:799
 msgid "How It Works"
 msgstr ""
 
-#: includes/admin.php:783
+#: includes/admin.php:808
 msgid "Check"
 msgstr ""
 
-#: includes/admin.php:796
+#: includes/admin.php:821
 msgid "Download"
 msgstr ""
 
-#: includes/admin.php:809
+#: includes/admin.php:834
 msgid "Backup"
 msgstr ""
 
-#: includes/admin.php:822
+#: includes/admin.php:847
 msgid "Update"
 msgstr ""
 
-#: includes/admin.php:828
+#: includes/admin.php:853
 msgid "Seamlessly updates your theme with zero downtime through a secure, automated process."
 msgstr ""
 
-#: includes/admin.php:836
+#: includes/admin.php:861
 msgid "Update Configuration"
 msgstr ""
 
-#: includes/admin.php:873
+#: includes/admin.php:898
 msgid "Diagnostics"
 msgstr ""
 
-#: includes/admin.php:896
+#: includes/admin.php:921
 msgid "Use these tools to diagnose and troubleshoot the update process."
 msgstr ""
 
-#: includes/admin.php:911
+#: includes/admin.php:936
 msgid "System Information"
 msgstr ""
 
-#: includes/admin.php:912
+#: includes/admin.php:937
 msgid "Technical information about your WordPress environment."
 msgstr ""
 
-#: includes/admin.php:916
+#: includes/admin.php:941
 msgid "WordPress Version"
 msgstr ""
 
-#: includes/admin.php:921
+#: includes/admin.php:946
 msgid "PHP Version"
 msgstr ""
 
-#: includes/admin.php:926
+#: includes/admin.php:951
 msgid "File Permissions"
 msgstr ""
 
-#: includes/admin.php:969 includes/update-processor.php:114
+#: includes/admin.php:994 includes/update-processor.php:138
 msgid "Checking for updates..."
 msgstr ""
 
-#: includes/admin.php:989 includes/admin.php:1083 includes/admin.php:1174
-#: includes/admin.php:1212
+#: includes/admin.php:1014 includes/admin.php:1108 includes/admin.php:1199
+#: includes/admin.php:1237
 msgid "Error:"
 msgstr ""
 
-#: includes/admin.php:993 includes/admin.php:1101 includes/admin.php:1139
-#: includes/admin.php:1178 includes/admin.php:1216
+#: includes/admin.php:1018 includes/admin.php:1126 includes/admin.php:1164
+#: includes/admin.php:1203 includes/admin.php:1241
 msgid "AJAX Error:"
 msgstr ""
 
-#: includes/admin.php:1019
+#: includes/admin.php:1044
 msgid "Executing update..."
 msgstr ""
 
-#: includes/admin.php:1094
+#: includes/admin.php:1119
 msgid "Update process is not responding. Check server error logs."
 msgstr ""
 
-#: includes/admin.php:1122
+#: includes/admin.php:1147
 msgid "Testing filesystem access..."
 msgstr ""
 
-#: includes/admin.php:1133
+#: includes/admin.php:1158
 msgid "Success:"
 msgstr ""
 
-#: includes/admin.php:1135
+#: includes/admin.php:1160
 msgid "Failed:"
 msgstr ""
 
-#: includes/admin.php:1192
+#: includes/admin.php:1217
 msgid "Are you sure you want to cancel the scheduled update?"
 msgstr ""
 
-#: includes/ajax.php:21 includes/ajax.php:55 includes/ajax.php:107
-#: includes/ajax.php:254 includes/ajax.php:284 includes/ajax.php:337
-#: includes/ajax.php:394 includes/ajax.php:456
-msgid "Permission denied."
-msgstr ""
-
-#: includes/ajax.php:29
+#: includes/ajax.php:34
 msgid "Plugin not configured (Target Theme or Update URL missing)."
 msgstr ""
 
-#: includes/ajax.php:37
-msgid "Update check triggered. Status will refresh on the next automatic check or page load."
+#: includes/ajax.php:40
+msgid "Update check triggered. Status will update automatically in a moment."
 msgstr ""
 
-#: includes/ajax.php:60
+#: includes/ajax.php:69
 msgid "Could not initialize WP_Filesystem."
 msgstr ""
 
-#: includes/ajax.php:73
+#: includes/ajax.php:82
 msgid "Failed to retrieve filesystem credentials non-interactively. This might require direct filesystem access or specific constants (FS_METHOD, FTP_HOST, etc.) defined in wp-config.php for background tasks."
 msgstr ""
 
-#: includes/ajax.php:80
+#: includes/ajax.php:89
 msgid "WP_Filesystem() failed to initialize with the retrieved credentials. Check filesystem permissions and ownership."
 msgstr ""
 
-#: includes/ajax.php:83
+#: includes/ajax.php:92
 #, php-format
 msgid "Attempted method: %s"
 msgstr ""
 
-#: includes/ajax.php:93
+#: includes/ajax.php:102
 #, php-format
 msgid "Successfully initialized using the '%s' method."
 msgstr ""
 
-#: includes/ajax.php:114
+#: includes/ajax.php:128
 msgid "Target theme not configured."
 msgstr ""
 
-#: includes/ajax.php:119
+#: includes/ajax.php:133
 msgid "Execution started, status unknown."
 msgstr ""
 
-#: includes/ajax.php:131
+#: includes/ajax.php:145
 msgid "Update URL not configured."
 msgstr ""
 
-#: includes/ajax.php:138
+#: includes/ajax.php:152
 msgid "Failed to fetch update information from remote server."
 msgstr ""
 
-#: includes/ajax.php:145
+#: includes/ajax.php:159
 msgid "Target theme is not active. Please activate it first."
 msgstr ""
 
-#: includes/ajax.php:150
+#: includes/ajax.php:164
 msgid "INT_VERSION constant not defined in active theme."
 msgstr ""
 
-#: includes/ajax.php:159
+#: includes/ajax.php:173
 #, php-format
 msgid "No update needed. Current version (%s) is up to date or newer than remote version (%s)."
 msgstr ""
 
-#: includes/ajax.php:177
+#: includes/ajax.php:191
 msgid "Update execution in progress..."
 msgstr ""
 
-#: includes/ajax.php:198
+#: includes/ajax.php:239
 msgid "Execution finished, status unknown."
 msgstr ""
 
-#: includes/ajax.php:202 includes/update-processor.php:555
+#: includes/ajax.php:243 includes/update-processor.php:579
 #, php-format
 msgid "Update failed with error: %s"
 msgstr ""
 
-#: includes/ajax.php:207 includes/update-processor.php:577
+#: includes/ajax.php:248 includes/update-processor.php:601
 #, php-format
 msgid "Update failed with fatal error: %s"
 msgstr ""
 
-#: includes/ajax.php:218
+#: includes/ajax.php:259
 msgid "(Stray output captured, check PHP error log)"
 msgstr ""
 
-#: includes/ajax.php:228
+#: includes/ajax.php:282
 msgid "Update execution completed."
 msgstr ""
 
-#: includes/ajax.php:228 includes/ajax.php:234 includes/ajax.php:241
+#: includes/ajax.php:282 includes/ajax.php:288 includes/ajax.php:295
 msgid "Final Status:"
 msgstr ""
 
-#: includes/ajax.php:234
+#: includes/ajax.php:288
 msgid "Update execution finished, but final status is unclear or indicates an issue."
 msgstr ""
 
-#: includes/ajax.php:241
+#: includes/ajax.php:295
 msgid "Update execution failed."
 msgstr ""
 
-#: includes/ajax.php:264 includes/ajax.php:294 includes/ajax.php:345
+#: includes/ajax.php:308 includes/ajax.php:338 includes/ajax.php:391
+#: includes/ajax.php:445 includes/ajax.php:507
+msgid "Permission denied."
+msgstr ""
+
+#: includes/ajax.php:318 includes/ajax.php:348 includes/ajax.php:399
 msgid "No target theme configured."
 msgstr ""
 
-#: includes/ajax.php:269 includes/ajax.php:273
+#: includes/ajax.php:323 includes/ajax.php:327
 msgid "Status reset by admin."
 msgstr ""
 
-#: includes/ajax.php:272
+#: includes/ajax.php:326
 msgid "Error status has been reset."
 msgstr ""
 
-#: includes/ajax.php:302
+#: includes/ajax.php:356
 msgid "No scheduled update found."
 msgstr ""
 
-#: includes/ajax.php:310
+#: includes/ajax.php:364
 msgid "Failed to cancel scheduled update."
 msgstr ""
 
-#: includes/ajax.php:318 includes/ajax.php:322
+#: includes/ajax.php:372 includes/ajax.php:376
 msgid "Scheduled update cancelled by admin."
 msgstr ""
 
-#: includes/ajax.php:321
+#: includes/ajax.php:375
 msgid "Scheduled update has been cancelled."
 msgstr ""
 
-#: includes/ajax.php:357
+#: includes/ajax.php:411
 msgid "Progress tracking function not available"
 msgstr ""
 
-#: includes/ajax.php:375
+#: includes/ajax.php:429
 #, php-format
 msgid "Error getting update progress: %s"
 msgstr ""
 
-#: includes/ajax.php:406
+#: includes/ajax.php:457
 msgid "No setting name provided."
 msgstr ""
 
-#: includes/ajax.php:420
+#: includes/ajax.php:471
 msgid "Invalid URL format."
 msgstr ""
 
-#: includes/ajax.php:431
+#: includes/ajax.php:482
 msgid "Unknown setting."
 msgstr ""
 
-#: includes/ajax.php:445
+#: includes/ajax.php:496
 msgid "Setting saved successfully."
 msgstr ""
 
-#: includes/ajax.php:471
+#: includes/ajax.php:522
 msgid "No active theme detected."
 msgstr ""
 
-#: includes/ajax.php:478
+#: includes/ajax.php:529
 msgid "Theme does not exist."
 msgstr ""
 
-#: includes/ajax.php:498
+#: includes/ajax.php:549
 msgid "Only the active theme is supported for seamless updates."
 msgstr ""
 
-#: includes/ajax.php:517
+#: includes/ajax.php:568
 msgid "SSU_URL constant found and automatically saved to settings."
 msgstr ""
 
-#: includes/ajax.php:524
+#: includes/ajax.php:575
 msgid "SSU_URL constant found in theme."
 msgstr ""
 
-#: includes/ajax.php:531
+#: includes/ajax.php:582
 msgid "SSU_URL constant not found in theme."
 msgstr ""
 
 #: includes/class-wpsu-base.php:70
-msgid "每2小时一次"
+msgid "Every 2 hours"
 msgstr ""
 
-#: includes/hooks.php:50
-msgid "设置"
+#: includes/hooks.php:243
+msgid "Settings"
+msgstr ""
+
+#: includes/security.php:31
+msgid "You do not have sufficient permissions to perform this action."
+msgstr ""
+
+#: includes/security.php:32
+msgid "Permission Error"
+msgstr ""
+
+#: includes/security.php:107
+#, php-format
+msgid "Invalid theme operation request. Requested theme: %s, Configured theme: %s"
+msgstr ""
+
+#: includes/security.php:109
+msgid "Security Error"
+msgstr ""
+
+#: includes/security.php:261
+msgid "Invalid URL"
 msgstr ""
 
 #: includes/update-checker.php:35
@@ -598,319 +618,342 @@ msgstr ""
 msgid "Target theme does not exist."
 msgstr ""
 
-#: includes/update-checker.php:68
+#: includes/update-checker.php:79
+#, php-format
+msgid "Using cached INT_VERSION (%s). Constant not defined in active theme."
+msgstr ""
+
+#: includes/update-checker.php:85
 msgid "Could not read INT_VERSION from active theme functions.php."
 msgstr ""
 
-#: includes/update-checker.php:71
-msgid "Target theme not active, cannot read INT_VERSION."
+#: includes/update-checker.php:88
+msgid "Target theme not active, cannot read INT_VERSION and no cached value available."
 msgstr ""
 
-#: includes/update-checker.php:83
+#: includes/update-checker.php:94
+msgid "Attempting to read INT_VERSION by analyzing theme files..."
+msgstr ""
+
+#: includes/update-checker.php:113
+#, php-format
+msgid "Extracted INT_VERSION (%s) from theme files."
+msgstr ""
+
+#: includes/update-checker.php:139
 msgid "Failed to fetch or parse remote update info."
 msgstr ""
 
-#: includes/update-checker.php:90
+#: includes/update-checker.php:146
 #, php-format
 msgid "Standard update available (Display Version %s > %s). Letting WP handle."
 msgstr ""
 
-#: includes/update-checker.php:99
+#: includes/update-checker.php:155
 #, php-format
 msgid "Internal update needed (Remote Internal: %s > Local INT_VERSION: %s). Scheduling update."
 msgstr ""
 
-#: includes/update-checker.php:124
+#: includes/update-checker.php:180
 #, php-format
 msgid "Internal Update Available: %s"
 msgstr ""
 
-#: includes/update-checker.php:142
+#: includes/update-checker.php:198
 #, php-format
 msgid "Theme is up to date (Display: %s, INT_VERSION: %s)."
 msgstr ""
 
-#: includes/update-checker.php:148
+#: includes/update-checker.php:204
 #, php-format
 msgid "Remote display version (%s) is older than local (%s). No action taken."
 msgstr ""
 
-#: includes/update-processor.php:31
+#: includes/update-processor.php:28
+msgid "Update failed: Security verification failed - Theme operation not authorized."
+msgstr ""
+
+#: includes/update-processor.php:34
+#, php-format
+msgid "Update failed: Security verification error - %s"
+msgstr ""
+
+#: includes/update-processor.php:55
 msgid "Starting update process (package mode)..."
 msgstr ""
 
-#: includes/update-processor.php:45
+#: includes/update-processor.php:69
 msgid "Configuration mismatch or missing"
 msgstr ""
 
-#: includes/update-processor.php:46
+#: includes/update-processor.php:70
 msgid "Update failed: Configuration mismatch or missing."
 msgstr ""
 
-#: includes/update-processor.php:54
+#: includes/update-processor.php:78
 msgid "Update failed: Target theme not found."
 msgstr ""
 
-#: includes/update-processor.php:76
+#: includes/update-processor.php:100
 msgid "Could not read INT_VERSION in theme"
 msgstr ""
 
-#: includes/update-processor.php:77
+#: includes/update-processor.php:101
 msgid "Update failed: Could not read INT_VERSION in background task. Is the theme active?"
 msgstr ""
 
-#: includes/update-processor.php:86
+#: includes/update-processor.php:110
 msgid "Update failed: Could not access upload directory."
 msgstr ""
 
-#: includes/update-processor.php:120
+#: includes/update-processor.php:144
 msgid "Could not fetch remote version info"
 msgstr ""
 
-#: includes/update-processor.php:121
+#: includes/update-processor.php:145
 msgid "Update failed: Could not fetch remote version info."
 msgstr ""
 
-#: includes/update-processor.php:124
+#: includes/update-processor.php:148
 msgid "Found update information"
 msgstr ""
 
-#: includes/update-processor.php:132
+#: includes/update-processor.php:156
 msgid "Remote info is missing package details"
 msgstr ""
 
-#: includes/update-processor.php:133
+#: includes/update-processor.php:157
 msgid "Update failed: Remote information is incomplete for package update."
 msgstr ""
 
-#: includes/update-processor.php:147
+#: includes/update-processor.php:171
 #, php-format
 msgid "Update failed: Display version mismatch (Remote: %s, Local: %s)."
 msgstr ""
 
-#: includes/update-processor.php:155
+#: includes/update-processor.php:179
 msgid "No update needed. Remote version is not newer than current version."
 msgstr ""
 
-#: includes/update-processor.php:180
+#: includes/update-processor.php:204
 msgid "Update failed: Could not get filesystem credentials. Check wp-config.php settings."
 msgstr ""
 
-#: includes/update-processor.php:191
+#: includes/update-processor.php:215
 msgid "Update failed: Could not initialize filesystem. Check credentials/permissions."
 msgstr ""
 
-#: includes/update-processor.php:199
+#: includes/update-processor.php:223
 msgid "Update failed: Filesystem object not available after initialization."
 msgstr ""
 
-#: includes/update-processor.php:208
+#: includes/update-processor.php:232
 msgid "Update failed: Could not access theme directory. Check permissions."
 msgstr ""
 
-#: includes/update-processor.php:217
+#: includes/update-processor.php:241
 msgid "Update failed: Could not write to theme directory. Check permissions."
 msgstr ""
 
-#: includes/update-processor.php:225
+#: includes/update-processor.php:249
 msgid "Step 1: Downloading update package..."
 msgstr ""
 
-#: includes/update-processor.php:233
+#: includes/update-processor.php:257
 msgid "Failed to create temporary base directory"
 msgstr ""
 
-#: includes/update-processor.php:234
+#: includes/update-processor.php:258
 msgid "Update failed: Could not create temporary base directory."
 msgstr ""
 
-#: includes/update-processor.php:241
+#: includes/update-processor.php:265
 msgid "Failed to create temporary directory"
 msgstr ""
 
-#: includes/update-processor.php:242
+#: includes/update-processor.php:266
 msgid "Update failed: Could not create temporary directory."
 msgstr ""
 
-#: includes/update-processor.php:261
+#: includes/update-processor.php:285
 #, php-format
 msgid "Update failed: Could not download update package. Error: %s"
 msgstr ""
 
-#: includes/update-processor.php:265
+#: includes/update-processor.php:289
 msgid "Verifying package integrity..."
 msgstr ""
 
-#: includes/update-processor.php:273
+#: includes/update-processor.php:297
 msgid "Update failed: Could not read downloaded package for verification."
 msgstr ""
 
-#: includes/update-processor.php:282
+#: includes/update-processor.php:306
 msgid "Update failed: Package integrity check failed."
 msgstr ""
 
-#: includes/update-processor.php:290
+#: includes/update-processor.php:314
 msgid "Update failed: Could not move downloaded package to temporary location."
 msgstr ""
 
-#: includes/update-processor.php:296
+#: includes/update-processor.php:320
 msgid "Extracting update package..."
 msgstr ""
 
-#: includes/update-processor.php:302
+#: includes/update-processor.php:326
 msgid "Update failed: Could not create extraction directory."
 msgstr ""
 
-#: includes/update-processor.php:311
+#: includes/update-processor.php:335
 #, php-format
 msgid "Update failed: Could not extract update package. Error: %s"
 msgstr ""
 
-#: includes/update-processor.php:327
+#: includes/update-processor.php:351
 msgid "Download or extraction failed. Update aborted."
 msgstr ""
 
-#: includes/update-processor.php:333
+#: includes/update-processor.php:357
 msgid "Update package downloaded and extracted"
 msgstr ""
 
-#: includes/update-processor.php:342
+#: includes/update-processor.php:366
 msgid "Step 2: Backup disabled, skipping..."
 msgstr ""
 
-#: includes/update-processor.php:344
+#: includes/update-processor.php:368
 msgid "Step 2: Creating backup..."
 msgstr ""
 
-#: includes/update-processor.php:350
+#: includes/update-processor.php:374
 msgid "Update failed: Could not create backup directory."
 msgstr ""
 
-#: includes/update-processor.php:357
+#: includes/update-processor.php:381
 msgid "Update failed: Could not create specific backup directory."
 msgstr ""
 
-#: includes/update-processor.php:362
+#: includes/update-processor.php:386
 msgid "Creating theme backup..."
 msgstr ""
 
-#: includes/update-processor.php:371
+#: includes/update-processor.php:395
 #, php-format
 msgid "Backup failed: %s"
 msgstr ""
 
-#: includes/update-processor.php:372
+#: includes/update-processor.php:396
 #, php-format
 msgid "Update failed: Could not backup theme. Error: %s"
 msgstr ""
 
-#: includes/update-processor.php:377
+#: includes/update-processor.php:401
 msgid "Backup completed successfully"
 msgstr ""
 
-#: includes/update-processor.php:381
+#: includes/update-processor.php:405
 msgid "Step 3: Preparing staging area..."
 msgstr ""
 
-#: includes/update-processor.php:387
+#: includes/update-processor.php:411
 msgid "Failed to create staging directory"
 msgstr ""
 
-#: includes/update-processor.php:388
+#: includes/update-processor.php:412
 msgid "Update failed: Could not create staging directory."
 msgstr ""
 
-#: includes/update-processor.php:391
+#: includes/update-processor.php:415
 msgid "Creating staging copy of theme..."
 msgstr ""
 
-#: includes/update-processor.php:400
+#: includes/update-processor.php:424
 #, php-format
 msgid "Failed to create staging copy: %s"
 msgstr ""
 
-#: includes/update-processor.php:401
+#: includes/update-processor.php:425
 #, php-format
 msgid "Update failed: Could not copy theme to staging directory. Error: %s"
 msgstr ""
 
-#: includes/update-processor.php:405
+#: includes/update-processor.php:429
 msgid "Staging area prepared successfully"
 msgstr ""
 
-#: includes/update-processor.php:408
+#: includes/update-processor.php:432
 msgid "Step 4: Applying updates to staging area..."
 msgstr ""
 
-#: includes/update-processor.php:462
+#: includes/update-processor.php:486
 #, php-format
 msgid "Applied %d file updates to staging area"
 msgstr ""
 
-#: includes/update-processor.php:468
+#: includes/update-processor.php:492
 msgid "Step 6: Activating the new version..."
 msgstr ""
 
-#: includes/update-processor.php:516
+#: includes/update-processor.php:540
 msgid "New version activated and verified"
 msgstr ""
 
-#: includes/update-processor.php:520
+#: includes/update-processor.php:544
 msgid "Step 7: Finalizing update..."
 msgstr ""
 
-#: includes/update-processor.php:541
+#: includes/update-processor.php:565
 #, php-format
 msgid "Update successful. Remote Internal Version: %s (Local INT_VERSION should reflect this after update)."
 msgstr ""
 
-#: includes/update-processor.php:542
+#: includes/update-processor.php:566
 #, php-format
 msgid "Update successful to internal version %s"
 msgstr ""
 
-#: includes/update-processor.php:610
+#: includes/update-processor.php:634
 msgid "Update failed. Rollback failed (Filesystem unavailable)."
 msgstr ""
 
-#: includes/update-processor.php:632
+#: includes/update-processor.php:656
 msgid "Update failed. CRITICAL: Rollback failed (No backup available, theme directory missing). Manual intervention required."
 msgstr ""
 
-#: includes/update-processor.php:635
+#: includes/update-processor.php:659
 msgid "Update failed. Rollback skipped (No backup available, original theme directory untouched)."
 msgstr ""
 
-#: includes/update-processor.php:651
+#: includes/update-processor.php:675
 msgid "Update failed. Rollback failed (Could not delete existing theme directory). Manual intervention required."
 msgstr ""
 
-#: includes/update-processor.php:669
+#: includes/update-processor.php:693
 msgid "Update failed. CRITICAL: Rollback failed during restore from backup. Manual intervention required."
 msgstr ""
 
-#: includes/update-processor.php:673
+#: includes/update-processor.php:697
 msgid "Update failed. Successfully rolled back to previous version."
 msgstr ""
 
-#: includes/update-processor.php:708
+#: includes/update-processor.php:732
 #, php-format
 msgid "Update failed: %s"
 msgstr ""
 
-#: includes/update-processor.php:711 includes/update-processor.php:715
+#: includes/update-processor.php:735 includes/update-processor.php:739
 msgid "Update in progress: "
 msgstr ""
 
-#: includes/update-processor.php:712
+#: includes/update-processor.php:736
 msgid "Update successful. "
 msgstr ""
 
-#: includes/update-processor.php:730
+#: includes/update-processor.php:754
 msgid "No update in progress"
 msgstr ""
 
-#: includes/update-processor.php:778
+#: includes/update-processor.php:802
 #, php-format
 msgid "Update process stalled at \"%s\". Server may have timed out. Check PHP error logs for details."
 msgstr ""
