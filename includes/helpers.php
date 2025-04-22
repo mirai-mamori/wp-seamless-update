@@ -197,16 +197,48 @@ function wpsu_get_filesystem() {
  * 清理指定主题的更新transient中的响应信息
  * 
  * @param string $theme_slug 主题slug
- * @param object $transient 更新transient对象
- * @return object 更新后的transient对象
+ * @param object $transient 更新transient对象 (可选，如果不提供则自动获取)
+ * @param bool $save_transient 是否保存修改后的transient (只在$transient未提供时有效)
+ * @return object|void 如果提供了$transient参数则返回更新后的transient对象，否则无返回值
  */
-function wpsu_clear_update_transient_response($theme_slug, $transient) {
+function wpsu_clear_update_transient_response($theme_slug, $transient = null, $save_transient = true) {
+    // 如果未提供transient，则自动获取
+    $auto_fetch = false;
+    if ($transient === null) {
+        $transient = get_site_transient('update_themes');
+        $auto_fetch = true;
+    }
+    
+    if (!is_object($transient)) {
+        return $auto_fetch ? null : $transient; // 如果transient不是对象，返回原值或null
+    }
+    
     // 确保响应数组存在且包含主题条目
     if (isset($transient->response) && isset($transient->response[$theme_slug])) {
         // 删除此主题的响应条目
         unset($transient->response[$theme_slug]);
+        
+        // 如果是自动获取且需要保存，则保存修改后的transient
+        if ($auto_fetch && $save_transient) {
+            set_site_transient('update_themes', $transient);
+            error_log("WP Seamless Update: 已清除主题 $theme_slug 的更新通知");
+        }
     }
-    return $transient;
+    
+    // 如果是自动获取模式，不返回任何值
+    // 否则返回修改后的transient以用于过滤器
+    return $auto_fetch ? null : $transient;
+}
+
+/**
+ * 清理指定主题的更新transient (兼容函数)
+ * 
+ * @param string $theme_slug 主题slug
+ */
+function wpsu_clear_update_transient($theme_slug) {
+    // 调用主函数，自动获取并保存transient
+    wpsu_clear_update_transient_response($theme_slug);
+    error_log("WP Seamless Update: 已清除主题 $theme_slug 的更新通知");
 }
 
 /**
@@ -292,4 +324,70 @@ function wpsu_clear_third_party_caches() {
     
     // 尝试刷新对象缓存
     wp_cache_flush();
+}
+
+/**
+ * 管理主题备份，保留指定数量的最新备份
+ * 
+ * @param string $theme_slug 主题slug
+ * @param string $backup_dir_base 备份目录基础路径
+ * @param int $backups_to_keep 要保留的备份数量
+ */
+function wpsu_manage_backups($theme_slug, $backup_dir_base, $backups_to_keep) {
+    // 如果不保留备份，则不需要执行任何操作
+    if ($backups_to_keep <= 0) {
+        error_log("WP Seamless Update: 根据设置不保留备份");
+        return;
+    }
+
+    // 初始化WP_Filesystem
+    $wp_filesystem = wpsu_get_filesystem();
+    if (!$wp_filesystem) {
+        error_log("WP Seamless Update: 无法初始化WP_Filesystem，跳过备份管理");
+        return;
+    }
+
+    // 确保目录路径格式正确
+    $backup_dir_base = trailingslashit($backup_dir_base);
+    
+    // 获取目录列表
+    if (!$wp_filesystem->is_dir($backup_dir_base)) {
+        error_log("WP Seamless Update: 备份基础目录不存在: $backup_dir_base");
+        return;
+    }
+    
+    $backup_pattern = $theme_slug . '-';
+    $backup_dirs = array();
+    
+    // 遍历目录并过滤出当前主题的备份
+    $all_items = $wp_filesystem->dirlist($backup_dir_base);
+    if (is_array($all_items)) {
+        foreach ($all_items as $name => $details) {
+            if ($details['type'] === 'd' && strpos($name, $backup_pattern) === 0) {
+                // 从名称中提取时间戳
+                $timestamp_part = substr($name, strlen($backup_pattern));
+                if (is_numeric($timestamp_part)) {
+                    $backup_dirs[$name] = intval($timestamp_part);
+                }
+            }
+        }
+    }
+    
+    // 按时间戳排序（最新的在前）
+    arsort($backup_dirs);
+    
+    // 保留指定数量的备份，删除多余的
+    $count = 0;
+    foreach ($backup_dirs as $dir => $timestamp) {
+        $count++;
+        if ($count > $backups_to_keep) {
+            $dir_to_delete = $backup_dir_base . $dir;
+            error_log("WP Seamless Update: 删除旧备份: $dir_to_delete");
+            if (!$wp_filesystem->delete($dir_to_delete, true)) {
+                error_log("WP Seamless Update: 无法删除旧备份: $dir_to_delete");
+            }
+        }
+    }
+    
+    error_log("WP Seamless Update: 备份管理完成，保留了 " . min($count, $backups_to_keep) . " 个备份");
 }

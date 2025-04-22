@@ -18,13 +18,37 @@ if ( ! defined( 'WPINC' ) ) {
  *
  * @param string $target_theme_slug 要更新的主题的 slug。
  */
-function wpsu_perform_seamless_update( $target_theme_slug ) {
-    // 设置执行时间限制为5分钟（300秒），避免脚本超时
-    @set_time_limit(300);
+function wpsu_perform_seamless_update( $target_theme_slug ) {    // 主题操作验证（确保只能更新配置的主题）
+    if (!defined('DOING_CRON') || !DOING_CRON) { // 如果不是通过CRON运行，则进行额外验证
+        try {
+            // 修改：使用不会终止执行的方式验证，以便于捕获错误
+            if (!WPSU_Security::verify_theme_operation($target_theme_slug, false)) {
+                $error_message = "安全验证失败 - 主题操作未获授权";
+                error_log("WP Seamless Update: " . $error_message);
+                update_option('wpsu_last_check_status_' . $target_theme_slug, __('Update failed: Security verification failed - Theme operation not authorized.', 'wp-seamless-update'));
+                return;
+            }
+        } catch (Exception $e) {
+            $error_message = "安全验证失败 - " . $e->getMessage();
+            error_log("WP Seamless Update: " . $error_message);
+            update_option('wpsu_last_check_status_' . $target_theme_slug, sprintf(__('Update failed: Security verification error - %s', 'wp-seamless-update'), $e->getMessage()));
+            return;
+        }
+    }
+    
+    // 设置执行时间限制，优先使用安全常量定义的值
+    $timeout = defined('WPSU_FILE_OPERATION_TIMEOUT') ? WPSU_FILE_OPERATION_TIMEOUT : 300;
+    @set_time_limit($timeout);
     
     // 增加详细的开始日志，包含环境信息
     error_log("WP Seamless Update Cron: ====== 开始为主题 $target_theme_slug 执行更新 (使用更新包) ======");
     error_log("WP Seamless Update: 环境信息 - PHP版本: " . phpversion() . ", WordPress版本: " . get_bloginfo('version') . ", 内存限制: " . ini_get('memory_limit') . ", 最大执行时间: " . ini_get('max_execution_time') . "秒");
+    
+    // 记录更新开始的安全事件
+    WPSU_Security::log_security_event('update_started', array(
+        'theme' => $target_theme_slug,
+        'is_cron' => defined('DOING_CRON') && DOING_CRON
+    ));
     
     // 清除旧的进度信息并设置初始进度
     wpsu_clear_update_progress($target_theme_slug);

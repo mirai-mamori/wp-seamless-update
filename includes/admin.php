@@ -14,13 +14,32 @@ if ( ! defined( 'WPINC' ) ) {
  * 将选项页面添加到菜单。
  */
 function wpsu_add_admin_menu() {
-    add_options_page(
+    $page_hook = add_options_page(
         __( 'WP Seamless Update Settings', 'wp-seamless-update' ),
         __( 'Seamless Update', 'wp-seamless-update' ),
-        'manage_options',
+        'manage_options', // 确保只有管理员可以访问
         WPSU_PLUGIN_SLUG,
         'wpsu_options_page_html'
     );
+    
+    // 添加页面加载钩子来记录访问
+    if ($page_hook) {
+        add_action('load-' . $page_hook, 'wpsu_admin_page_load');
+    }
+}
+
+/**
+ * 记录管理页面访问并执行安全检查
+ */
+function wpsu_admin_page_load() {
+    // 记录管理页面访问
+    WPSU_Security::log_security_event('admin_page_accessed', array(
+        'user_id' => get_current_user_id(),
+        'referer' => isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'unknown'
+    ));
+    
+    // 权限二次验证
+    WPSU_Security::verify_permissions('manage_options');
 }
 add_action( 'admin_menu', 'wpsu_add_admin_menu' );
 
@@ -659,10 +678,16 @@ function wpsu_filesystem_test_render() {
  * 渲染设置页面 HTML。
  */
 function wpsu_options_page_html() {
-    // 检查用户权限
-    if ( ! current_user_can( 'manage_options' ) ) {
-        return;
-    }
+    // 使用安全类进行权限检查，如果无权限则终止执行
+    WPSU_Security::verify_permissions('manage_options');
+    
+    // 创建页面安全nonce
+    $admin_nonce = wp_create_nonce('wpsu_admin_nonce');
+    
+    // 记录页面访问事件
+    WPSU_Security::log_security_event('options_page_accessed', array(
+        'user_id' => get_current_user_id()
+    ));
 
     // 加载自定义样式
     wp_enqueue_style('dashicons');

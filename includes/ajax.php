@@ -15,11 +15,15 @@ if ( ! defined( 'ABSPATH' ) ) { // 使用 ABSPATH 进行更严格的检查
  */
 function wpsu_ajax_manual_check() {
     error_reporting(0); // Suppress PHP errors/warnings
-    check_ajax_referer( 'wpsu_manual_check_nonce', '_ajax_nonce' );
-
-    if ( ! current_user_can( 'manage_options' ) ) {
-        wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-seamless-update' ) ) );
-    }
+    
+    // 使用安全类进行AJAX nonce验证和权限检查
+    WPSU_Security::verify_ajax_nonce('wpsu_manual_check_nonce');
+    WPSU_Security::verify_permissions('manage_options');
+    
+    // 记录安全事件
+    WPSU_Security::log_security_event('manual_update_check', array(
+        'user_id' => get_current_user_id()
+    ));
 
     $options = get_option( WPSU_OPTION_NAME, array() );
     // 对从选项获取的数据进行清理
@@ -52,11 +56,16 @@ add_action( 'wp_ajax_wpsu_manual_check', 'wpsu_ajax_manual_check' );
  */
 function wpsu_ajax_filesystem_test() {
     error_reporting(0); // Suppress PHP errors/warnings
-    check_ajax_referer( 'wpsu_filesystem_test_nonce', '_ajax_nonce' );
-
-    if ( ! current_user_can( 'manage_options' ) ) {
-        wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-seamless-update' ) ) );
-    }
+    
+    // 使用安全类进行AJAX nonce验证和权限检查
+    WPSU_Security::verify_ajax_nonce('wpsu_filesystem_test_nonce');
+    WPSU_Security::verify_permissions('manage_options');
+    
+    // 记录文件系统测试尝试
+    WPSU_Security::log_security_event('filesystem_test', array(
+        'user_id' => get_current_user_id(),
+        'method' => get_filesystem_method()
+    ));
 
     $test_result = array(
         'success' => false,
@@ -104,11 +113,16 @@ add_action( 'wp_ajax_wpsu_filesystem_test', 'wpsu_ajax_filesystem_test' );
  */
 function wpsu_ajax_trigger_update() {
     error_reporting(0); // Suppress PHP errors/warnings
-    check_ajax_referer( 'wpsu_trigger_update_nonce', '_ajax_nonce' );
-
-    if ( ! current_user_can( 'manage_options' ) ) {
-        wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-seamless-update' ) ) );
-    }
+    
+    // 使用安全类进行AJAX nonce验证和权限检查
+    WPSU_Security::verify_ajax_nonce('wpsu_trigger_update_nonce');
+    WPSU_Security::verify_permissions('manage_options');
+    
+    // 记录更新触发事件
+    WPSU_Security::log_security_event('update_triggered', array(
+        'user_id' => get_current_user_id(),
+        'ip' => WPSU_Security::get_user_ip()
+    ));
 
     $options = get_option( WPSU_OPTION_NAME, array() );
     $target_theme_slug = isset( $options['target_theme'] ) ? $options['target_theme'] : null;
@@ -184,14 +198,41 @@ function wpsu_ajax_trigger_update() {
         // 确保处理程序文件已加载
         if (!function_exists('wpsu_perform_seamless_update')) {
              require_once(dirname(__FILE__) . '/update-processor.php');
-        }
-
-        // 执行更新
+        }        // 执行更新
         if (function_exists('wpsu_perform_seamless_update')) {
-            wpsu_perform_seamless_update($target_theme_slug);
-            $execution_success = true; // Assume success if no exception is thrown
+            // 添加错误处理
+            try {
+                // 开启错误捕获，记录任何警告或通知
+                $old_error_reporting = error_reporting(E_ALL);
+                $old_display_errors = ini_get('display_errors');
+                ini_set('display_errors', 0);
+                
+                ob_start(); // 捕获任何可能的输出
+                $result = wpsu_perform_seamless_update($target_theme_slug);
+                $debug_output = ob_get_clean();
+                
+                // 恢复原始错误设置
+                error_reporting($old_error_reporting);
+                ini_set('display_errors', $old_display_errors);
+                
+                // 记录调试输出
+                if (!empty($debug_output)) {
+                    error_log("WP Seamless Update: Debug output during update: " . $debug_output);
+                }
+                
+                // 获取最新状态
+                $latest_status = get_option('wpsu_last_check_status_' . $target_theme_slug, '');
+                
+                if ($result === false) {
+                    throw new Exception('更新过程返回失败状态，最新状态: ' . $latest_status);
+                }
+                
+                $execution_success = true;
+            } catch (Exception $inner_e) {
+                throw new Exception('更新执行过程中出错: ' . $inner_e->getMessage());
+            }
         } else {
-             throw new Exception('Update processor function wpsu_perform_seamless_update not found.');
+             throw new Exception('更新处理函数wpsu_perform_seamless_update未找到，请确保插件安装正确。');
         }
 
         // 记录执行时间

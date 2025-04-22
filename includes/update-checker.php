@@ -57,15 +57,16 @@ function wpsu_check_for_theme_update( $transient ) {
 
     // 首先检查缓存的INT_VERSION值
     $cached_int_version = get_option('wpsu_cached_int_version_' . $target_theme_slug, false);
-    
-    if ($theme_is_active && defined('INT_VERSION')) {
-        // 主题处于活动状态且常量已定义，使用实际INT_VERSION值
+      if ($theme_is_active && defined('INT_VERSION')) {        // 主题处于活动状态且常量已定义，使用实际INT_VERSION值
         $current_internal_version = INT_VERSION;
         $current_internal_version_for_compare = $current_internal_version;
         
+        // 确保我们有一个变量来记录日志，避免常量直接展开的问题
+        $int_version_value = constant('INT_VERSION');
+        
         // 缓存当前值，以便在主题不活动时使用
-        update_option('wpsu_cached_int_version_' . $target_theme_slug, INT_VERSION);
-        error_log("WP Seamless Update: Cached INT_VERSION ($INT_VERSION) for theme $target_theme_slug");
+        update_option('wpsu_cached_int_version_' . $target_theme_slug, $int_version_value);
+        error_log("WP Seamless Update: Cached INT_VERSION ({$int_version_value}) for theme $target_theme_slug");
     } elseif ($cached_int_version) {
         // 使用缓存的INT_VERSION值
         $current_internal_version = $cached_int_version;
@@ -215,12 +216,22 @@ function wpsu_check_for_theme_update( $transient ) {
  * @return object|false 解码的 JSON 对象或失败时返回 false。
  */
 function wpsu_fetch_remote_version_info( $update_url ) {
-    // 记录尝试获取更新的URL，以便于调试
-    error_log( sprintf( 'WP Seamless Update: Attempting to fetch update info from %s', $update_url ) );
+    // 使用安全类验证URL
+    $validated_url = WPSU_Security::validate_update_url($update_url);
+    if (!$validated_url) {
+        error_log('WP Seamless Update: Invalid update URL detected: ' . esc_url($update_url));
+        WPSU_Security::log_security_event('invalid_update_url', array(
+            'url' => $update_url
+        ));
+        return false;
+    }
     
-    // 增加超时时间到30秒，以应对慢速连接
-    $response = wp_remote_get( $update_url, array(
-        'timeout' => 30, // 增加超时时间
+    // 记录尝试获取更新的URL，以便于调试
+    error_log(sprintf('WP Seamless Update: Attempting to fetch update info from %s', $validated_url));
+    
+    // 使用安全的远程获取方法
+    $response = WPSU_Security::safe_remote_get($validated_url, array(
+        'timeout' => defined('WPSU_FILE_OPERATION_TIMEOUT') ? WPSU_FILE_OPERATION_TIMEOUT : 30,
         'sslverify' => true,
         'headers' => array( // 防止缓存问题
             'Cache-Control' => 'no-cache',
@@ -243,9 +254,7 @@ function wpsu_fetch_remote_version_info( $update_url ) {
         error_log( sprintf( 'WP Seamless Update: Failed to fetch update info from %s - HTTP Status: %s %s', 
             $update_url, $response_code, $response_message ) );
         return false;
-    }
-
-    $body = wp_remote_retrieve_body( $response );
+    }    $body = wp_remote_retrieve_body( $response );
     
     // 记录返回的数据长度，以便调试
     $body_length = strlen($body);
@@ -254,25 +263,28 @@ function wpsu_fetch_remote_version_info( $update_url ) {
     // 如果内容为空，直接返回错误
     if (empty($body)) {
         error_log( 'WP Seamless Update: Empty response received from update URL' );
+        WPSU_Security::log_security_event('empty_update_response', array(
+            'url' => $update_url
+        ));
         return false;
     }
     
-    // 尝试解码JSON
-    $data = json_decode( $body );
-
-    if ( json_last_error() !== JSON_ERROR_NONE ) {
-        $json_error = json_last_error_msg();
-        error_log( sprintf( 'WP Seamless Update: Failed to decode JSON from %s - JSON Error: %s', $update_url, $json_error ) );
-        
-        // 记录一些返回内容，帮助调试 (只记录前200个字符，避免日志过大)
+    // 使用安全类验证JSON数据
+    $required_fields = array('display_version', 'internal_version');
+    $data = WPSU_Security::validate_json_data($body, $required_fields);
+    
+    if (!$data) {
+        // 验证失败，记录一些返回内容帮助调试（只记录前200个字符，避免日志过大）
         $sample = substr($body, 0, 200);
-        error_log( sprintf( 'WP Seamless Update: Response sample: %s', $sample ) );
+        error_log(sprintf('WP Seamless Update: Invalid JSON response sample: %s', $sample));
         
+        // 安全类内部已经记录了详细错误，这里不需要重复
         return false;
-    }    // 基本验证（仅验证版本字段，让 update-processor 处理其他字段验证）
-    if ( ! isset( $data->display_version ) || ! isset( $data->internal_version ) ) {
-        error_log( sprintf( 'WP Seamless Update: Invalid JSON structure from %s. Missing required version fields.', $update_url ) );
-        return false;
+    }
+    
+    // 转换为对象格式，保持与原代码兼容
+    if (is_array($data)) {
+        $data = (object)$data;
     }
     
     // 记录更多信息以帮助调试

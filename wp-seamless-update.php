@@ -31,6 +31,10 @@ if (file_exists($base_file)) require_once $base_file;
 $helpers_file = plugin_dir_path( __FILE__ ) . 'includes/helpers.php';
 if (file_exists($helpers_file)) require_once $helpers_file;
 
+// 加载安全模块（在其他模块之前，确保安全功能优先）
+$security_file = plugin_dir_path( __FILE__ ) . 'includes/security.php';
+if (file_exists($security_file)) require_once $security_file;
+
 $checker_file = plugin_dir_path( __FILE__ ) . 'includes/update-checker.php';
 if (file_exists($checker_file)) require_once $checker_file;
 
