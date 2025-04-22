@@ -101,86 +101,195 @@ function wpsu_cleanup_temp_dirs($wp_filesystem, $uploads_base, $target_theme_slu
 }
 
 /**
- * 管理指定主题的备份目录，只保留指定数量的最新备份。
- *
- * @global WP_Filesystem_Base $wp_filesystem
- * @param string $theme_slug 主题 slug。
- * @param string $backup_dir_base 基础备份目录路径。
- * @param int $backups_to_keep 要保留的备份数量。
+ * 递归删除目录及其内容
+ * 
+ * @param string $dir 要删除的目录路径
+ * @return bool 删除是否成功
  */
-function wpsu_manage_backups( $theme_slug, $backup_dir_base, $backups_to_keep ) {
-    global $wp_filesystem;
-    if ( ! $wp_filesystem || $backups_to_keep <= 0 ) {
-        return;
+function wpsu_recursive_delete_directory($dir) {
+    if (!file_exists($dir)) {
+        return true;
     }
     
-    // 确保备份目录路径末尾有斜杠
-    $backup_dir_base = trailingslashit($backup_dir_base);
-    
-    // 检查目录是否存在
-    if ( ! $wp_filesystem->is_dir( $backup_dir_base ) ) {
-        return;
+    if (!is_dir($dir)) {
+        return unlink($dir);
     }
-
-    error_log("WP Seamless Update Cleanup: 管理备份目录 $backup_dir_base, 保留 $backups_to_keep 个备份。");
-
-    $backups = [];
-    $dir_list = $wp_filesystem->dirlist( $backup_dir_base, false, false ); // 非递归
-
-    if ( is_array( $dir_list ) ) {
-        foreach ( $dir_list as $item ) {
-            // 检查是否是目录，并且名称以 "themeslug-" 开头
-            if ( $item['type'] === 'd' && strpos( $item['name'], $theme_slug . '-' ) === 0 ) {
-                // 尝试从目录名中提取时间戳
-                $parts = explode( '-', $item['name'] );
-                $timestamp = end( $parts );
-                if ( is_numeric( $timestamp ) ) {
-                    $backups[ intval( $timestamp ) ] = trailingslashit( $backup_dir_base ) . $item['name'];
-                }
+    
+    // 获取WP_Filesystem实例
+    $wp_filesystem = wpsu_get_filesystem();
+    if ($wp_filesystem) {
+        // 使用WP_Filesystem删除目录
+        return $wp_filesystem->delete($dir, true);
+    } else {
+        // 回退到PHP直接删除
+        foreach (scandir($dir) as $item) {
+            if ($item == '.' || $item == '..') {
+                continue;
+            }
+            
+            $path = $dir . DIRECTORY_SEPARATOR . $item;
+            
+            if (is_dir($path)) {
+                wpsu_recursive_delete_directory($path);
+            } else {
+                unlink($path);
             }
         }
-    }
-
-    if ( count( $backups ) > $backups_to_keep ) {
-        krsort( $backups ); // 按时间戳降序排序（最新的在前）
-        $backups_to_delete = array_slice( $backups, $backups_to_keep ); // 获取需要删除的旧备份
-
-        foreach ( $backups_to_delete as $timestamp => $dir_path ) {
-            error_log( "WP Seamless Update Cleanup: 删除旧备份目录: $dir_path (Timestamp: $timestamp)" );
-            $wp_filesystem->delete( $dir_path, true );
-        }
-    } else {
-        error_log("WP Seamless Update Cleanup: 当前备份数量 (" . count($backups) . ") 未超过限制 ($backups_to_keep)。无需删除。");
+        
+        return rmdir($dir);
     }
 }
 
 /**
- * 辅助函数，通过引用清除主题的更新通知。
- *
- * @param string $theme_slug 主题 slug。
- * @param object|null $transient transient 对象（如果提供的话，通过引用传递）。
+ * 获取用于临时文件的目录
+ * 
+ * @return string|bool 临时目录路径或失败时返回false
  */
-function wpsu_clear_update_transient_response($theme_slug, &$transient = null) {
-     $needs_set = false;
-     if ($transient === null) {
-        $transient = get_site_transient('update_themes');
-        $needs_set = true; // 我们获取了它，所以如果更改，我们需要设置回来
-     }
+function wpsu_get_temp_directory() {
+    $upload_dir = wp_upload_dir();
+    
+    if (!empty($upload_dir['error'])) {
+        error_log("WP Seamless Update: Error getting upload directory: " . $upload_dir['error']);
+        return false;
+    }
+    
+    $temp_dir = $upload_dir['basedir'] . '/wpsu-temp';
+    
+    // 如果目录不存在，尝试创建它
+    if (!file_exists($temp_dir)) {
+        if (!wp_mkdir_p($temp_dir)) {
+            error_log("WP Seamless Update: Failed to create temp directory: {$temp_dir}");
+            return false;
+        }
+        
+        // 保护目录不被公开访问
+        $index_file = $temp_dir . '/index.php';
+        if (!file_exists($index_file)) {
+            file_put_contents($index_file, '<?php // Silence is golden');
+        }
+    }
+    
+    return $temp_dir;
+}
 
-    if ( $transient && isset($transient->response) && is_array($transient->response) && isset($transient->response[$theme_slug]) ) {
+/**
+ * 获取WP_Filesystem实例
+ * 
+ * @return WP_Filesystem_Base|false 文件系统实例或失败时返回false
+ */
+function wpsu_get_filesystem() {
+    global $wp_filesystem;
+
+    if (!function_exists('WP_Filesystem')) {
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+    }
+
+    // 初始化文件系统
+    if (WP_Filesystem()) {
+        return $wp_filesystem;
+    }
+
+    error_log("WP Seamless Update: Unable to initialize WP_Filesystem");
+    return false;
+}
+
+/**
+ * 清理指定主题的更新transient中的响应信息
+ * 
+ * @param string $theme_slug 主题slug
+ * @param object $transient 更新transient对象
+ * @return object 更新后的transient对象
+ */
+function wpsu_clear_update_transient_response($theme_slug, $transient) {
+    // 确保响应数组存在且包含主题条目
+    if (isset($transient->response) && isset($transient->response[$theme_slug])) {
+        // 删除此主题的响应条目
         unset($transient->response[$theme_slug]);
-        error_log("WP Seamless Update: Cleared update transient response entry for theme $theme_slug.");
-        if ($needs_set) {
-             set_site_transient('update_themes', $transient);
-        }
     }
+    return $transient;
 }
 
 /**
- * 辅助函数，通过获取和设置来清除更新 transient *response* 条目。
- *
- * @param string $theme_slug 主题 slug。
+ * 刷新前端显示的主题信息
+ * 
+ * 通过清除所有与主题相关的缓存，确保前端显示的主题信息被更新
+ * 同时考虑到第三方缓存插件的存在
  */
-function wpsu_clear_update_transient($theme_slug) {
-    wpsu_clear_update_transient_response($theme_slug); // 传递 null 以获取/设置
+function wpsu_refresh_frontend_display() {
+    // 清除主题缓存
+    wp_cache_delete('theme-roots', 'themes');
+    
+    // 清除主题文件路径缓存
+    $theme_roots = get_theme_roots();
+    if (is_array($theme_roots)) {
+        foreach ($theme_roots as $theme_dir => $root) {
+            wp_cache_delete("theme-{$theme_dir}", 'themes');
+        }
+    }
+    
+    // 清除所有主题的元数据缓存
+    $all_themes = wp_get_themes();
+    if (is_array($all_themes)) {
+        foreach ($all_themes as $theme) {
+            $theme_slug = $theme->get_stylesheet();
+            wp_cache_delete("theme-{$theme_slug}-data", 'themes');
+            wp_cache_delete("theme-{$theme_slug}", 'themes');
+        }
+    }
+    
+    // 清除更新缓存
+    delete_site_transient('update_themes');
+    delete_site_transient('theme_roots');
+    
+    // 刷新WordPress可用更新数据
+    wp_update_themes();
+    
+    // 尝试处理常见的第三方缓存插件
+    wpsu_clear_third_party_caches();
+    
+    // 记录日志
+    error_log("WP Seamless Update: Refreshed frontend theme display by clearing all theme caches");
+}
+
+/**
+ * 尝试清理第三方缓存插件的缓存
+ * 
+ * 处理常见的缓存插件，以确保前端显示最新的主题信息
+ */
+function wpsu_clear_third_party_caches() {
+    // W3 Total Cache
+    if (function_exists('w3tc_flush_all')) {
+        w3tc_flush_all();
+        error_log("WP Seamless Update: Cleared W3 Total Cache");
+    }
+    
+    // WP Super Cache
+    if (function_exists('wp_cache_clear_cache')) {
+        wp_cache_clear_cache();
+        error_log("WP Seamless Update: Cleared WP Super Cache");
+    }
+    
+    // WP Rocket
+    if (function_exists('rocket_clean_domain')) {
+        rocket_clean_domain();
+        error_log("WP Seamless Update: Cleared WP Rocket Cache");
+    }
+    
+    // LiteSpeed Cache
+    if (class_exists('LiteSpeed\Purge') && method_exists('LiteSpeed\Purge', 'purge_all')) {
+        \LiteSpeed\Purge::purge_all();
+        error_log("WP Seamless Update: Cleared LiteSpeed Cache");
+    }
+    
+    // Autoptimize
+    if (class_exists('autoptimizeCache') && method_exists('autoptimizeCache', 'clearall')) {
+        \autoptimizeCache::clearall();
+        error_log("WP Seamless Update: Cleared Autoptimize Cache");
+    }
+    
+    // 触发一个自定义的动作钩子，允许其他插件清理它们的缓存
+    do_action('wpsu_clear_cache');
+    
+    // 尝试刷新对象缓存
+    wp_cache_flush();
 }

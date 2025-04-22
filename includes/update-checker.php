@@ -48,31 +48,86 @@ function wpsu_check_for_theme_update( $transient ) {
         return $transient;
     }
 
-    $current_display_version = $transient->checked[ $target_theme_slug ]; // 使用 WP 检查过的版本
-
-    // --- 从 functions.php 获取内部版本（如果可能）---
+    $current_display_version = $transient->checked[ $target_theme_slug ]; // 使用 WP 检查过的版本    // --- 从 functions.php 获取内部版本（如果可能）---
     $current_internal_version = 'N/A'; // 默认显示值
     $current_internal_version_for_compare = 0; // 默认比较值
     // 正确检查目标主题是否是当前活动主题
     $active_theme = wp_get_theme(); // 获取当前活动的主题对象
     $theme_is_active = ($active_theme->get_stylesheet() === $target_theme_slug);
 
-    if ( $theme_is_active && defined('INT_VERSION') ) {
-        // 仅当目标主题是当前活动主题且常量已定义时读取
+    // 首先检查缓存的INT_VERSION值
+    $cached_int_version = get_option('wpsu_cached_int_version_' . $target_theme_slug, false);
+    
+    if ($theme_is_active && defined('INT_VERSION')) {
+        // 主题处于活动状态且常量已定义，使用实际INT_VERSION值
         $current_internal_version = INT_VERSION;
-        $current_internal_version_for_compare = $current_internal_version; // 使用实际值进行比较
+        $current_internal_version_for_compare = $current_internal_version;
+        
+        // 缓存当前值，以便在主题不活动时使用
+        update_option('wpsu_cached_int_version_' . $target_theme_slug, INT_VERSION);
+        error_log("WP Seamless Update: Cached INT_VERSION ($INT_VERSION) for theme $target_theme_slug");
+    } elseif ($cached_int_version) {
+        // 使用缓存的INT_VERSION值
+        $current_internal_version = $cached_int_version;
+        $current_internal_version_for_compare = $cached_int_version;
+        error_log("WP Seamless Update: Using cached INT_VERSION ($cached_int_version) for theme $target_theme_slug");
+        
+        if ($theme_is_active) {
+            // 主题活动但INT_VERSION未定义，记录警告
+            error_log("WP Seamless Update Warning: Theme $target_theme_slug is active but INT_VERSION not defined. Using cached value.");
+            update_option($status_option_key, sprintf(__('Using cached INT_VERSION (%s). Constant not defined in active theme.', 'wp-seamless-update'), $cached_int_version));
+        }
     } else {
-         // 记录在预期情况下无法读取常量的情况（主题处于活动状态）
-         if ($theme_is_active) {
-            error_log("WP Seamless Update Check: Constant INT_VERSION not defined in active theme ($target_theme_slug) functions.php during check.");
-            update_option( $status_option_key, __( 'Could not read INT_VERSION from active theme functions.php.', 'wp-seamless-update' ) );
-         } else {
-             error_log("WP Seamless Update Check: Target theme ($target_theme_slug) is not active. Cannot read INT_VERSION.");
-             update_option( $status_option_key, __( 'Target theme not active, cannot read INT_VERSION.', 'wp-seamless-update' ) );
-         }
-         // 如果常量不可用，无法继续进行内部版本检查
-         wpsu_clear_update_transient_response($target_theme_slug, $transient); // 清除任何过时通知
-         return $transient;
+        // 无法获取INT_VERSION值
+        if ($theme_is_active) {
+            error_log("WP Seamless Update Error: Constant INT_VERSION not defined in active theme ($target_theme_slug) functions.php during check.");
+            update_option($status_option_key, __('Could not read INT_VERSION from active theme functions.php.', 'wp-seamless-update'));
+        } else {
+            error_log("WP Seamless Update: Target theme ($target_theme_slug) is not active and no cached INT_VERSION available.");
+            update_option($status_option_key, __('Target theme not active, cannot read INT_VERSION and no cached value available.', 'wp-seamless-update'));
+        }
+        
+        // 尝试临时激活主题以读取INT_VERSION值
+        if (current_user_can('switch_themes') && !$theme_is_active) {
+            error_log("WP Seamless Update: Attempting to read INT_VERSION by temporarily switching to theme $target_theme_slug");
+            update_option($status_option_key, __('Attempting to read INT_VERSION by analyzing theme files...', 'wp-seamless-update'));
+            
+            // 尝试直接从主题的functions.php文件中提取INT_VERSION
+            $theme_dir = get_theme_root() . '/' . $target_theme_slug;
+            $functions_file = $theme_dir . '/functions.php';
+            
+            if (file_exists($functions_file)) {
+                // 读取functions.php文件内容
+                $functions_content = file_get_contents($functions_file);
+                
+                // 使用正则表达式查找INT_VERSION定义
+                if (preg_match('/define\s*\(\s*[\'"]INT_VERSION[\'"]\s*,\s*[\'"]([^\'"]+)[\'"]\s*\)/i', $functions_content, $matches)) {
+                    $extracted_version = $matches[1];
+                    $current_internal_version = $extracted_version;
+                    $current_internal_version_for_compare = $extracted_version;
+                    
+                    // 缓存提取的值
+                    update_option('wpsu_cached_int_version_' . $target_theme_slug, $extracted_version);
+                    error_log("WP Seamless Update: Successfully extracted INT_VERSION ($extracted_version) from $functions_file");
+                    update_option($status_option_key, sprintf(__('Extracted INT_VERSION (%s) from theme files.', 'wp-seamless-update'), $extracted_version));
+                } else {
+                    error_log("WP Seamless Update: Failed to extract INT_VERSION from $functions_file");
+                    // 如果无法提取INT_VERSION，则无法继续进行内部版本检查
+                    wpsu_clear_update_transient_response($target_theme_slug, $transient); // 清除任何过时通知
+                    return $transient;
+                }
+            } else {
+                error_log("WP Seamless Update: Theme functions.php file not found at $functions_file");
+                // 如果常量不可用，无法继续进行内部版本检查
+                wpsu_clear_update_transient_response($target_theme_slug, $transient); // 清除任何过时通知
+                return $transient;
+            }
+        } else if (!current_user_can('switch_themes') && !$theme_is_active) {
+            error_log("WP Seamless Update: Current user cannot switch themes to read INT_VERSION");
+            // 如果常量不可用，无法继续进行内部版本检查
+            wpsu_clear_update_transient_response($target_theme_slug, $transient); // 清除任何过时通知
+            return $transient;
+        }
     }
     // --- 结束获取内部版本 ---
 

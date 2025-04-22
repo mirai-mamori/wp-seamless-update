@@ -220,13 +220,26 @@ function wpsu_ajax_trigger_update() {
         if (!$execution_success) {
              $final_status .= ' ' . __('(Stray output captured, check PHP error log)', 'wp-seamless-update');
         }
-    }
-
-    // --- Send JSON Response --- 
+    }    // --- Send JSON Response --- 
     if ($execution_success) {
          // Check if the status message indicates success explicitly
-         $success_indicator = 'Update successful'; // As set in update-processor.php
-         if (strpos($final_status, $success_indicator) !== false) {
+         // 支持英文和中文的成功指示词
+         $success_indicators = array(
+             'Update successful', // 英文（在update-processor.php中设置）
+             'updated successfully',
+             '更新成功', // 中文
+             '已成功更新'
+         );
+         
+         $is_success = false;
+         foreach ($success_indicators as $indicator) {
+             if (strpos(strtolower($final_status), strtolower($indicator)) !== false) {
+                 $is_success = true;
+                 break;
+             }
+         }
+         
+         if ($is_success) {
              wp_send_json_success( array(
                 'message' => __( 'Update execution completed.', 'wp-seamless-update' ) . ' ' . __( 'Final Status:', 'wp-seamless-update' ) . ' ' . $final_status,
                 'status' => $final_status
