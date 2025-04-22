@@ -253,3 +253,29 @@ add_filter('plugin_action_links_' . plugin_basename(WPSU_PLUGIN_FILE), 'wpsu_add
 
 // 添加主题切换钩子
 add_action('switch_theme', 'wpsu_switch_theme');
+
+/**
+ * 前端页面加载时刷新主题信息
+ * 
+ * 确保每次访问前端都能获取最新的主题信息
+ * 对所有主题一视同仁，不限于目标主题
+ */
+function wpsu_refresh_theme_on_frontend() {
+    // 确保只在前端执行，不在管理后台执行
+    if (!is_admin()) {
+        // 获取当前活动主题
+        $active_theme = wp_get_theme();
+        $active_theme_slug = $active_theme->get_stylesheet();
+        
+        // 无条件刷新当前活动的主题信息，不论是否是配置的目标主题
+        wpsu_refresh_frontend_display(true);
+        
+        // 记录刷新操作（可选，用于调试）
+        if (WP_DEBUG) {
+            error_log("WP Seamless Update: 已在前端刷新主题信息: {$active_theme_slug}");
+        }
+    }
+}
+
+// 在前端页面加载的早期阶段刷新主题信息（template_redirect钩子比wp_head更早执行）
+add_action('template_redirect', 'wpsu_refresh_theme_on_frontend', 1);

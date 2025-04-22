@@ -248,9 +248,17 @@ function wpsu_clear_update_transient($theme_slug) {
  * 通过清除所有与主题相关的缓存，确保前端显示的主题信息被更新
  * 同时考虑到第三方缓存插件的存在
  */
-function wpsu_refresh_frontend_display() {
+/**
+ * 刷新前端显示的主题信息
+ * 
+ * @param bool $force_flush 是否强制彻底刷新所有缓存
+ */
+function wpsu_refresh_frontend_display($force_flush = false) {
+    global $wp_styles, $wp_scripts;
+    
     // 清除主题缓存
     wp_cache_delete('theme-roots', 'themes');
+    wp_clean_themes_cache($force_flush);
     
     // 清除主题文件路径缓存
     $theme_roots = get_theme_roots();
@@ -267,7 +275,33 @@ function wpsu_refresh_frontend_display() {
             $theme_slug = $theme->get_stylesheet();
             wp_cache_delete("theme-{$theme_slug}-data", 'themes');
             wp_cache_delete("theme-{$theme_slug}", 'themes');
+            wp_cache_delete("theme-{$theme_slug}-files", 'themes');
+            
+            // 强制刷新时，重新加载当前主题的function.php文件
+            if ($force_flush && get_stylesheet() === $theme_slug) {
+                $functions_file = get_template_directory() . '/functions.php';
+                if (file_exists($functions_file)) {
+                    @include_once($functions_file);
+                }
+            }
         }
+    }
+    
+    // 清除样式和脚本缓存
+    if ($force_flush && $wp_styles) {
+        $wp_styles->queue = array();
+        $wp_styles->to_do = array();
+        $wp_styles->done = array();
+        $wp_styles->print_html = '';
+        $wp_styles->print_code = '';
+    }
+    
+    if ($force_flush && $wp_scripts) {
+        $wp_scripts->queue = array();
+        $wp_scripts->to_do = array();
+        $wp_scripts->done = array();
+        $wp_scripts->print_html = '';
+        $wp_scripts->print_code = '';
     }
     
     // 清除更新缓存
@@ -278,34 +312,67 @@ function wpsu_refresh_frontend_display() {
     wp_update_themes();
     
     // 尝试处理常见的第三方缓存插件
-    wpsu_clear_third_party_caches();
+    wpsu_clear_third_party_caches($force_flush);
+    
+    // 强制刷新时，尝试清除PHP OPCache
+    if ($force_flush && function_exists('opcache_reset')) {
+        @opcache_reset();
+    }
     
     // 记录日志
-    error_log("WP Seamless Update: Refreshed frontend theme display by clearing all theme caches");
+    $log_message = $force_flush ? 
+        "WP Seamless Update: 强制刷新前端主题显示（所有缓存已清除）" : 
+        "WP Seamless Update: 刷新前端主题显示（清除主题缓存）";
+    error_log($log_message);
 }
 
 /**
  * 尝试清理第三方缓存插件的缓存
  * 
  * 处理常见的缓存插件，以确保前端显示最新的主题信息
+ * 
+ * @param bool $force_flush 是否进行强制彻底清除
  */
-function wpsu_clear_third_party_caches() {
+function wpsu_clear_third_party_caches($force_flush = false) {
     // W3 Total Cache
     if (function_exists('w3tc_flush_all')) {
         w3tc_flush_all();
-        error_log("WP Seamless Update: Cleared W3 Total Cache");
+        error_log("WP Seamless Update: 已清除 W3 Total Cache");
+        
+        // 强制刷新时尝试清除更多特定缓存
+        if ($force_flush) {
+            if (function_exists('w3tc_flush_all_except_timestamp')) {
+                w3tc_flush_all_except_timestamp();
+            }
+            if (function_exists('w3tc_flush_posts')) {
+                w3tc_flush_posts();
+            }
+            if (function_exists('w3tc_flush_minify')) {
+                w3tc_flush_minify();
+            }
+            error_log("WP Seamless Update: 已强制清除 W3 Total Cache 详细缓存");
+        }
     }
     
     // WP Super Cache
     if (function_exists('wp_cache_clear_cache')) {
         wp_cache_clear_cache();
-        error_log("WP Seamless Update: Cleared WP Super Cache");
+        error_log("WP Seamless Update: 已清除 WP Super Cache");
     }
     
     // WP Rocket
     if (function_exists('rocket_clean_domain')) {
         rocket_clean_domain();
-        error_log("WP Seamless Update: Cleared WP Rocket Cache");
+        
+        // 强制刷新时执行更彻底的清理
+        if ($force_flush && function_exists('rocket_clean_minify')) {
+            rocket_clean_minify();
+            
+            if (function_exists('rocket_clean_cache_busting')) {
+                rocket_clean_cache_busting();
+            }
+        }
+        error_log("WP Seamless Update: 已清除 WP Rocket Cache" . ($force_flush ? " (强制模式)" : ""));
     }
     
     // LiteSpeed Cache
