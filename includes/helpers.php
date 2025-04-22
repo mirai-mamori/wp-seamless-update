@@ -3,6 +3,11 @@
  * Helper functions for WP Seamless Update
  */
 
+// If this file is called directly, abort.
+if ( ! defined( 'ABSPATH' ) ) {
+    die;
+}
+
 // 确保使用正确的翻译函数
 function wpsu_get_text($text) {
     return __($text, 'wp-seamless-update');
@@ -334,6 +339,12 @@ function wpsu_clear_third_party_caches() {
  * @param int $backups_to_keep 要保留的备份数量
  */
 function wpsu_manage_backups($theme_slug, $backup_dir_base, $backups_to_keep) {
+    // 检查参数有效性
+    if (empty($theme_slug)) {
+        error_log("WP Seamless Update: 备份管理失败，主题slug不能为空");
+        return;
+    }
+
     // 如果不保留备份，则不需要执行任何操作
     if ($backups_to_keep <= 0) {
         error_log("WP Seamless Update: 根据设置不保留备份");
@@ -361,6 +372,13 @@ function wpsu_manage_backups($theme_slug, $backup_dir_base, $backups_to_keep) {
     
     // 遍历目录并过滤出当前主题的备份
     $all_items = $wp_filesystem->dirlist($backup_dir_base);
+    
+    // 增加对 $all_items 是否为 false 的检查
+    if ($all_items === false) {
+        error_log("WP Seamless Update: 无法读取备份基础目录内容: $backup_dir_base，可能是权限问题");
+        return;
+    }
+    
     if (is_array($all_items)) {
         foreach ($all_items as $name => $details) {
             if ($details['type'] === 'd' && strpos($name, $backup_pattern) === 0) {
@@ -373,21 +391,33 @@ function wpsu_manage_backups($theme_slug, $backup_dir_base, $backups_to_keep) {
         }
     }
     
+    // 如果没有找到任何备份，提前返回
+    if (empty($backup_dirs)) {
+        error_log("WP Seamless Update: 未发现主题 $theme_slug 的备份");
+        return;
+    }
+    
     // 按时间戳排序（最新的在前）
     arsort($backup_dirs);
     
     // 保留指定数量的备份，删除多余的
     $count = 0;
+    $deleted_count = 0;
     foreach ($backup_dirs as $dir => $timestamp) {
         $count++;
         if ($count > $backups_to_keep) {
             $dir_to_delete = $backup_dir_base . $dir;
-            error_log("WP Seamless Update: 删除旧备份: $dir_to_delete");
-            if (!$wp_filesystem->delete($dir_to_delete, true)) {
-                error_log("WP Seamless Update: 无法删除旧备份: $dir_to_delete");
+            // 确保目录仍然存在再删除
+            if ($wp_filesystem->exists($dir_to_delete)) {
+                if ($wp_filesystem->delete($dir_to_delete, true)) {
+                    $deleted_count++;
+                    error_log("WP Seamless Update: 删除旧备份: $dir_to_delete");
+                } else {
+                    error_log("WP Seamless Update: 无法删除旧备份: $dir_to_delete");
+                }
             }
         }
     }
     
-    error_log("WP Seamless Update: 备份管理完成，保留了 " . min($count, $backups_to_keep) . " 个备份");
+    error_log("WP Seamless Update: 备份管理完成，保留了 " . min($count, $backups_to_keep) . " 个备份，删除了 $deleted_count 个旧备份");
 }

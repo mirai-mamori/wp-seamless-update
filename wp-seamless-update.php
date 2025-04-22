@@ -21,34 +21,76 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // 加载常量定义
 $const_file = plugin_dir_path( __FILE__ ) . 'includes/constants.php';
-if (file_exists($const_file)) require_once $const_file;
+if (file_exists($const_file)) {
+    require_once $const_file;
+} else {
+    error_log("WP Seamless Update: 错误 - 缺少常量定义文件: {$const_file}");
+    add_action('admin_notices', function() {
+        echo '<div class="notice notice-error"><p>WP Seamless Update: 错误 - 插件文件不完整，请重新安装插件。</p></div>';
+    });
+}
 
 // 加载基础类
 $base_file = plugin_dir_path( __FILE__ ) . 'includes/class-wpsu-base.php';
-if (file_exists($base_file)) require_once $base_file;
+if (file_exists($base_file)) {
+    require_once $base_file;
+} else {
+    error_log("WP Seamless Update: 错误 - 缺少基础类文件: {$base_file}");
+    add_action('admin_notices', function() {
+        echo '<div class="notice notice-error"><p>WP Seamless Update: 错误 - 插件文件不完整，请重新安装插件。</p></div>';
+    });
+}
 
 // 加载模块
 $helpers_file = plugin_dir_path( __FILE__ ) . 'includes/helpers.php';
-if (file_exists($helpers_file)) require_once $helpers_file;
+if (file_exists($helpers_file)) {
+    require_once $helpers_file;
+} else {
+    error_log("WP Seamless Update: 错误 - 缺少辅助函数文件: {$helpers_file}");
+}
 
 // 加载安全模块（在其他模块之前，确保安全功能优先）
 $security_file = plugin_dir_path( __FILE__ ) . 'includes/security.php';
-if (file_exists($security_file)) require_once $security_file;
+if (file_exists($security_file)) {
+    require_once $security_file;
+} else {
+    error_log("WP Seamless Update: 错误 - 缺少安全模块文件: {$security_file}");
+}
 
 $checker_file = plugin_dir_path( __FILE__ ) . 'includes/update-checker.php';
-if (file_exists($checker_file)) require_once $checker_file;
+if (file_exists($checker_file)) {
+    require_once $checker_file;
+} else {
+    error_log("WP Seamless Update: 错误 - 缺少更新检查器文件: {$checker_file}");
+}
 
 $processor_file = plugin_dir_path( __FILE__ ) . 'includes/update-processor.php';
-if (file_exists($processor_file)) require_once $processor_file;
+if (file_exists($processor_file)) {
+    require_once $processor_file;
+} else {
+    error_log("WP Seamless Update: 错误 - 缺少更新处理器文件: {$processor_file}");
+}
 
 $ajax_file = plugin_dir_path( __FILE__ ) . 'includes/ajax.php';
-if (file_exists($ajax_file)) require_once $ajax_file;
+if (file_exists($ajax_file)) {
+    require_once $ajax_file;
+} else {
+    error_log("WP Seamless Update: 错误 - 缺少AJAX处理文件: {$ajax_file}");
+}
 
 $admin_file = plugin_dir_path( __FILE__ ) . 'includes/admin.php';
-if (file_exists($admin_file)) require_once $admin_file;
+if (file_exists($admin_file)) {
+    require_once $admin_file;
+} else {
+    error_log("WP Seamless Update: 错误 - 缺少管理界面文件: {$admin_file}");
+}
 
 $hooks_file = plugin_dir_path( __FILE__ ) . 'includes/hooks.php';
-if (file_exists($hooks_file)) require_once $hooks_file;
+if (file_exists($hooks_file)) {
+    require_once $hooks_file;
+} else {
+    error_log("WP Seamless Update: 错误 - 缺少钩子处理文件: {$hooks_file}");
+}
 
 // 注册激活、停用钩子
 register_activation_hook( __FILE__, 'wpsu_activate' );
